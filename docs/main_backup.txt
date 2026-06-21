@@ -1,0 +1,141 @@
+from fastapi import FastAPI, HTTPException
+from app.database import engine
+from app.models import Base
+from pydantic import BaseModel
+from typing import Optional
+
+app = FastAPI()
+
+Base.metadata.create_all(bind=engine)
+
+@app.get("/")
+def raiz():
+
+    return {
+        "mensagem": "API CafeManager funcionando!"
+    }
+
+class Cafe(BaseModel):
+    nome: str
+
+
+cafes = []
+
+proximo_id = 1
+
+
+@app.get("/")
+def raiz():
+    return {
+        "mensagem": "API CafeManager funcionando!"
+    }
+
+
+@app.get("/cafes")
+def listar_cafes(nome: str | None = None):
+
+    if nome:
+
+        nome_procurado = nome.strip().lower()
+
+        for cafe in cafes:
+
+            if cafe["nome"].strip().lower() == nome_procurado:
+                return cafe
+
+        raise HTTPException(
+            status_code=404,
+            detail="Café não encontrado"
+        )
+
+    return cafes
+
+
+@app.post("/cafes")
+def cadastrar_cafe(cafe: Cafe):
+
+    global proximo_id
+
+    nome_novo = cafe.nome.strip()
+
+    if not nome_novo:
+        raise HTTPException(
+            status_code=400,
+            detail="Nome do café é obrigatório"
+        )
+
+    nome_novo = nome_novo.lower()
+
+    for cafe_existente in cafes:
+
+        if cafe_existente["nome"].strip().lower() == nome_novo:
+
+            raise HTTPException(
+                status_code=409,
+                detail="Já existe um café com esse nome"
+            )
+    
+    novo_cafe = {
+        "id": proximo_id,
+        "nome": cafe.nome.strip()
+    }
+
+    cafes.append(novo_cafe)
+
+    proximo_id += 1
+
+    return novo_cafe
+
+
+@app.get("/cafes/{id}")
+def buscar_cafe(id: int):
+
+    for cafe in cafes:
+
+        if cafe["id"] == id:
+            return cafe
+
+    raise HTTPException(
+        status_code=404,
+        detail="Café não encontrado"
+    )
+
+
+@app.delete("/cafes/{id}")
+def deletar_cafe(id: int):
+
+    for cafe in cafes:
+
+        if cafe["id"] == id:
+
+            cafes.remove(cafe)
+
+            return {
+                "mensagem": "Café removido com sucesso"
+            }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Café não encontrado"
+    )
+
+
+@app.delete("/cafes")
+def deletar_cafe_por_nome(nome: str):
+
+    nome_procurado = nome.strip().lower()
+
+    for cafe in cafes:
+
+        if cafe["nome"].strip().lower() == nome_procurado:
+
+            cafes.remove(cafe)
+
+            return {
+                "mensagem": "Café removido com sucesso"
+            }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Café não encontrado"
+    )
