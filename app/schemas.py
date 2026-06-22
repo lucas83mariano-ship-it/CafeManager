@@ -1,6 +1,42 @@
 from pydantic import (BaseModel, field_validator)
 from datetime import date
 
+from enum import Enum
+
+class MetodoCafe(str, Enum):
+
+    # Filtragem
+
+    MELITTA = "Melitta"
+    HARIO_V60 = "Hario V60"
+    CHEMEX = "Chemex"
+    KALITA_WAVE = "Kalita Wave"
+    COADOR_PANO = "Coador de Pano"
+    KOAR = "Koar"
+    ORIGAMI = "Origami"
+    TRICOLATE = "Tricolate"
+    
+    # Imersão
+
+    PRENSA_FRANCESA = "Prensa Francesa"
+    CLEVER = "Cafeteira Clever"
+    AEROPRESS = "Aeropress"
+
+    # Pressão e calor
+
+    MOKA = "Cafeteira Italiana (Moka)"
+    ESPRESSO = "Máquina de Espresso"
+    SIPHON = "Globinho (Siphon)"
+    IBRIK = "Cafeteira Turca (Ibrik)"
+
+    # Frio
+
+    COLD_BREW = "Cold Brew"
+
+    # Outros
+
+    SWITCH = "Hario Switch"
+
 class Cafe(BaseModel):
 
     empresa: str
@@ -86,7 +122,7 @@ class Receita(BaseModel):
 
     cafe_id: int | None = None
 
-    metodo: str
+    metodo: MetodoCafe
 
     moedor: str | None = None
 
@@ -99,6 +135,10 @@ class Receita(BaseModel):
     cafe_g: float
     
     data_receita: date | None = None
+
+    avaliacao: float | None = None
+
+    favorita: bool | None = None
 
     comentarios: str | None = None
 
@@ -149,3 +189,17 @@ class Receita(BaseModel):
             )
 
         return valor.strip()
+    
+    @field_validator("avaliacao")
+    @classmethod
+    def validar_avaliacao(cls, valor):
+
+        if valor is None:
+            return valor
+
+        if valor < 0 or valor > 5:
+            raise ValueError(
+                "Avaliação deve estar entre 0 e 5"
+            )
+
+        return valor

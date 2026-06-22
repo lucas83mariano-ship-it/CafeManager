@@ -1,6 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, Boolean
 from datetime import date
+from pydantic import field_validator
 
 
 class Base(DeclarativeBase):
@@ -63,4 +64,8 @@ class ReceitaDB(Base):
 
     data_receita = Column(Date)
 
+    avaliacao = Column(Float, nullable=True)
+
+    favorita = Column(Boolean, default=False)
+    
     comentarios = Column(String(2000))

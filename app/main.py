@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import (engine, SessionLocal)
 from app.models import (Base, CafeDB, ReceitaDB)
-from app.schemas import Cafe, Receita
+from app.schemas import Cafe, Receita, MetodoCafe
 from datetime import date
 #from typing import Optional
 
@@ -366,6 +366,8 @@ def cadastrar_receita(receita: Receita):
             "agua_ml": nova_receita.agua_ml,
             "cafe_g": nova_receita.cafe_g,
             "data_receita": nova_receita.data_receita,
+            "avaliacao": nova_receita.avaliacao,
+            "favorita": nova_receita.favorita,
             "comentarios": nova_receita.comentarios
         }
 
@@ -393,6 +395,8 @@ def listar_receitas():
                 "agua_ml": receita.agua_ml,
                 "cafe_g": receita.cafe_g,
                 "data_receita": receita.data_receita,
+                "avaliacao": receita.avaliacao,
+                "favorita": receita.favorita,
                 "comentarios": receita.comentarios
             }
             for receita in receitas
@@ -428,11 +432,15 @@ def buscar_receita(id: int):
             "id": receita.id,
             "cafe_id": receita.cafe_id,
             "metodo": receita.metodo,
+            "moedor": receita.moedor,
+            "clique": receita.clique,
             "proporcao": receita.proporcao,
             "agua_ml": receita.agua_ml,
             "cafe_g": receita.cafe_g,
-            "comentarios": receita.comentarios,
-            "data_receita": receita.data_receita
+            "data_receita": receita.data_receita,
+            "avaliacao": receita.avaliacao,
+            "favorita": receita.favorita,
+            "comentarios": receita.comentarios
         }
 
     finally:
@@ -507,17 +515,21 @@ def listar_receitas_do_cafe(id: int):
         return {
             "cafe": {
                 "id": cafe.id,
-                "nome_cafe": cafe.nome_cafe,
-                "empresa": cafe.empresa
+                "empresa": cafe.empresa,
+                "nome_cafe": cafe.nome_cafe
             },
             "receitas": [
                 {
                     "id": receita.id,
                     "metodo": receita.metodo,
+                    "moedor": receita.moedor,
+                    "clique": receita.clique,
                     "proporcao": receita.proporcao,
                     "agua_ml": receita.agua_ml,
                     "cafe_g": receita.cafe_g,
                     "data_receita": receita.data_receita,
+                    "avaliacao": receita.avaliacao,
+                    "favorita": receita.favorita,
                     "comentarios": receita.comentarios
                 }
                 for receita in receitas
@@ -527,3 +539,41 @@ def listar_receitas_do_cafe(id: int):
     finally:
 
         db.close()
+
+@app.get("/metodos")
+def listar_metodos():
+
+    return {
+
+        "Filtragem": [
+            "Melitta",
+            "Hario V60",
+            "Chemex",
+            "Kalita Wave",
+            "Coador de Pano",
+            "Koar",
+            "Origami",
+            "Tricolate"
+        ],
+
+        "Imersão": [
+            "Prensa Francesa",
+            "Cafeteira Clever",
+            "Aeropress"
+        ],
+
+        "Pressão e Calor": [
+            "Cafeteira Italiana (Moka)",
+            "Máquina de Espresso",
+            "Globinho (Siphon)",
+            "Cafeteira Turca (Ibrik)"
+        ],
+
+        "Extração a Frio": [
+            "Cold Brew"
+        ],
+
+        "Outros": [
+            "Hario Switch"
+        ]
+    }
