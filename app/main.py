@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import (engine, SessionLocal)
 from app.models import (Base, CafeDB, ReceitaDB)
-from app.schemas import Cafe
-#from pydantic import BaseModel
+from app.schemas import Cafe, Receita
+from datetime import date
 #from typing import Optional
 
 app = FastAPI()
@@ -24,6 +24,8 @@ def raiz():
         "mensagem": "API CafeManager funcionando!"
     }
 
+
+# Rotas para cafés
 @app.post("/cafes")
 def cadastrar_cafe(cafe: Cafe):
 
@@ -267,6 +269,259 @@ def deletar_cafe_por_nome(nome_cafe: str):
 
         return {
             "mensagem": "Café removido com sucesso"
+        }
+
+    finally:
+
+        db.close()
+
+@app.get("/cafes/resumo")
+def listar_cafes_resumo():
+
+    db: Session = SessionLocal()
+
+    try:
+
+        cafes = db.query(CafeDB).all()
+
+        return [
+            {
+                "id": cafe.id,
+                "nome_cafe": cafe.nome_cafe
+            }
+            for cafe in cafes
+        ]
+
+    finally:
+
+        db.close()
+
+
+# Rotas para receitas
+@app.post("/receitas")
+def cadastrar_receita(receita: Receita):
+
+    db: Session = SessionLocal()
+
+    try:
+
+        if receita.cafe_id:
+
+            cafe = (
+                db.query(CafeDB)
+                .filter(
+                    CafeDB.id == receita.cafe_id
+                )
+                .first()
+            )
+
+            if not cafe:
+
+                raise HTTPException(
+                    status_code=404,
+                    detail="Café informado não existe"
+                )
+
+        data_receita = (
+            receita.data_receita
+            if receita.data_receita
+            else date.today()
+        )
+
+        nova_receita = ReceitaDB(
+
+            cafe_id=receita.cafe_id,
+
+            metodo=receita.metodo,
+
+            moedor=receita.moedor,
+
+            clique=receita.clique,
+
+            proporcao=receita.proporcao,
+
+            agua_ml=receita.agua_ml,
+
+            cafe_g=receita.cafe_g,
+
+            data_receita=data_receita,
+
+            comentarios=receita.comentarios
+        )
+
+        db.add(nova_receita)
+
+        db.commit()
+
+        db.refresh(nova_receita)
+
+        return {
+
+            "id": nova_receita.id,
+            "cafe_id": nova_receita.cafe_id,
+            "metodo": nova_receita.metodo,
+            "moedor": nova_receita.moedor,
+            "clique": nova_receita.clique,
+            "proporcao": nova_receita.proporcao,
+            "agua_ml": nova_receita.agua_ml,
+            "cafe_g": nova_receita.cafe_g,
+            "data_receita": nova_receita.data_receita,
+            "comentarios": nova_receita.comentarios
+        }
+
+    finally:
+
+        db.close()
+
+@app.get("/receitas")
+def listar_receitas():
+
+    db: Session = SessionLocal()
+
+    try:
+
+        receitas = db.query(ReceitaDB).all()
+
+        return [
+            {
+                "id": receita.id,
+                "cafe_id": receita.cafe_id,
+                "metodo": receita.metodo,
+                "moedor": receita.moedor,
+                "clique": receita.clique,
+                "proporcao": receita.proporcao,
+                "agua_ml": receita.agua_ml,
+                "cafe_g": receita.cafe_g,
+                "data_receita": receita.data_receita,
+                "comentarios": receita.comentarios
+            }
+            for receita in receitas
+        ]
+
+    finally:
+
+        db.close()
+
+@app.get("/receitas/{id}")
+def buscar_receita(id: int):
+
+    db: Session = SessionLocal()
+
+    try:
+
+        receita = (
+            db.query(ReceitaDB)
+            .filter(
+                ReceitaDB.id == id
+            )
+            .first()
+        )
+
+        if not receita:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Receita não encontrada"
+            )
+
+        return {
+            "id": receita.id,
+            "cafe_id": receita.cafe_id,
+            "metodo": receita.metodo,
+            "proporcao": receita.proporcao,
+            "agua_ml": receita.agua_ml,
+            "cafe_g": receita.cafe_g,
+            "comentarios": receita.comentarios,
+            "data_receita": receita.data_receita
+        }
+
+    finally:
+
+        db.close()
+
+@app.delete("/receitas/{id}")
+def deletar_receita(id: int):
+
+    db: Session = SessionLocal()
+
+    try:
+
+        receita = (
+            db.query(ReceitaDB)
+            .filter(
+                ReceitaDB.id == id
+            )
+            .first()
+        )
+
+        if not receita:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Receita não encontrada"
+            )
+
+        db.delete(receita)
+
+        db.commit()
+
+        return {
+            "mensagem": "Receita removida com sucesso"
+        }
+
+    finally:
+
+        db.close()
+
+# Rota para listar receitas de um café específico
+@app.get("/cafes/{id}/receitas")
+def listar_receitas_do_cafe(id: int):
+
+    db: Session = SessionLocal()
+
+    try:
+
+        cafe = (
+            db.query(CafeDB)
+            .filter(
+                CafeDB.id == id
+            )
+            .first()
+        )
+
+        if not cafe:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Café não encontrado"
+            )
+
+        receitas = (
+            db.query(ReceitaDB)
+            .filter(
+                ReceitaDB.cafe_id == id
+            )
+            .all()
+        )
+
+        return {
+            "cafe": {
+                "id": cafe.id,
+                "nome_cafe": cafe.nome_cafe,
+                "empresa": cafe.empresa
+            },
+            "receitas": [
+                {
+                    "id": receita.id,
+                    "metodo": receita.metodo,
+                    "proporcao": receita.proporcao,
+                    "agua_ml": receita.agua_ml,
+                    "cafe_g": receita.cafe_g,
+                    "data_receita": receita.data_receita,
+                    "comentarios": receita.comentarios
+                }
+                for receita in receitas
+            ]
         }
 
     finally:
