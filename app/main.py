@@ -116,6 +116,27 @@ def cadastrar_cafe(cafe: Cafe):
 
         db.close()
 
+@app.get("/cafes/resumo")
+def listar_cafes_resumo():
+
+    db: Session = SessionLocal()
+
+    try:
+
+        cafes = db.query(CafeDB).all()
+
+        return [
+            {
+                "id": cafe.id,
+                "nome_cafe": cafe.nome_cafe
+            }
+            for cafe in cafes
+        ]
+
+    finally:
+
+        db.close()
+
 @app.get("/cafes/{id}")
 def buscar_cafe(id: int):
 
@@ -275,27 +296,6 @@ def deletar_cafe_por_nome(nome_cafe: str):
 
         db.close()
 
-@app.get("/cafes/resumo")
-def listar_cafes_resumo():
-
-    db: Session = SessionLocal()
-
-    try:
-
-        cafes = db.query(CafeDB).all()
-
-        return [
-            {
-                "id": cafe.id,
-                "nome_cafe": cafe.nome_cafe
-            }
-            for cafe in cafes
-        ]
-
-    finally:
-
-        db.close()
-
 
 # Rotas para receitas
 @app.post("/receitas")
@@ -305,7 +305,7 @@ def cadastrar_receita(receita: Receita):
 
     try:
 
-        if receita.cafe_id:
+        if receita.cafe_id is not None:
 
             cafe = (
                 db.query(CafeDB)
@@ -321,6 +321,74 @@ def cadastrar_receita(receita: Receita):
                     status_code=404,
                     detail="Café informado não existe"
                 )
+
+        campos_preenchidos = sum([
+            receita.proporcao is not None,
+            receita.agua_ml is not None,
+            receita.cafe_g is not None
+        ])
+
+        if campos_preenchidos < 2:
+        
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Informe pelo menos dois dos campos: "
+                    "proporcao, agua_ml e cafe_g"
+                )
+            )
+
+        if campos_preenchidos == 2:
+        
+            if receita.proporcao == 0:
+
+                raise HTTPException(
+                    status_code=422,
+                    detail="Proporção deve ser maior que zero"
+                )
+
+            if receita.cafe_g == 0:
+
+                raise HTTPException(
+                    status_code=422,
+                    detail="Quantidade de café deve ser maior que zero"
+                )
+            
+            if receita.proporcao is None:
+            
+                receita.proporcao = (
+                    receita.agua_ml /
+                    receita.cafe_g
+                )
+
+            elif receita.agua_ml is None:
+            
+                receita.agua_ml = (
+                    receita.proporcao *
+                    receita.cafe_g
+                )
+
+            elif receita.cafe_g is None:
+            
+                receita.cafe_g = (
+                    receita.agua_ml /
+                    receita.proporcao
+                )
+
+        receita.proporcao = round(
+            receita.proporcao,
+            2
+        )
+
+        receita.agua_ml = round(
+            receita.agua_ml,
+            2
+        )
+
+        receita.cafe_g = round(
+            receita.cafe_g,
+            2
+        )
 
         data_receita = (
             receita.data_receita
@@ -345,6 +413,10 @@ def cadastrar_receita(receita: Receita):
             cafe_g=receita.cafe_g,
 
             data_receita=data_receita,
+
+            avaliacao=receita.avaliacao,
+
+            favorita=receita.favorita,
 
             comentarios=receita.comentarios
         )

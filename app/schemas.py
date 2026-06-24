@@ -128,11 +128,11 @@ class Receita(BaseModel):
 
     clique: str | None = None
 
-    proporcao: float
+    proporcao: float | None = None
 
-    agua_ml: float
+    agua_ml: float | None = None
 
-    cafe_g: float
+    cafe_g: float | None = None
     
     data_receita: date | None = None
 
@@ -146,6 +146,12 @@ class Receita(BaseModel):
     @classmethod
     def validar_proporcao(cls, valor):
 
+        if valor is None:
+
+            raise ValueError(
+                "Proporção deve ser maior que zero"
+            )
+        
         if valor <= 0:
 
             raise ValueError(
@@ -158,6 +164,12 @@ class Receita(BaseModel):
     @classmethod
     def validar_cafe_g(cls, valor):
 
+        if valor is None:
+
+            raise ValueError(
+                "Proporção deve ser maior que zero"
+            )
+        
         if valor <= 0:
 
             raise ValueError(
@@ -170,6 +182,12 @@ class Receita(BaseModel):
     @classmethod
     def validar_agua_ml(cls, valor):
 
+        if valor is None:
+
+            raise ValueError(
+                "Proporção deve ser maior que zero"
+            )
+        
         if valor <= 0:
 
             raise ValueError(
