@@ -148,9 +148,7 @@ class Receita(BaseModel):
 
         if valor is None:
 
-            raise ValueError(
-                "Proporção deve ser maior que zero"
-            )
+            return valor
         
         if valor <= 0:
 
@@ -166,9 +164,7 @@ class Receita(BaseModel):
 
         if valor is None:
 
-            raise ValueError(
-                "Proporção deve ser maior que zero"
-            )
+            return valor
         
         if valor <= 0:
 
@@ -184,9 +180,7 @@ class Receita(BaseModel):
 
         if valor is None:
 
-            raise ValueError(
-                "Proporção deve ser maior que zero"
-            )
+            return valor
         
         if valor <= 0:
 
