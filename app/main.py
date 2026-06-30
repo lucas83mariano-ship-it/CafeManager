@@ -107,7 +107,15 @@ def cadastrar_cafe(cafe: Cafe):
             "empresa": novo_cafe.empresa,
             "nome_cafe": novo_cafe.nome_cafe,
             "pontuacao": novo_cafe.pontuacao,
+            "fazenda": novo_cafe.fazenda,
+            "produtor": novo_cafe.produtor,
             "altitude": novo_cafe.altitude,
+            "torra": novo_cafe.torra,
+            "aroma": novo_cafe.aroma,
+            "sabor": novo_cafe.sabor,
+            "retrogosto": novo_cafe.retrogosto,
+            "tipo_cafe": novo_cafe.tipo_cafe,
+            "processamento": novo_cafe.processamento,
             "origem": novo_cafe.origem,
             "link_produto": novo_cafe.link_produto
         }

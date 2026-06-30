@@ -1,4 +1,4 @@
-from pydantic import (BaseModel, field_validator)
+from pydantic import BaseModel, field_validator, Field
 from datetime import date
 
 from enum import Enum
@@ -140,7 +140,7 @@ class Receita(BaseModel):
 
     favorita: bool | None = None
 
-    comentarios: str | None = None
+    comentarios: str | None = Field (default=None, max_length=2000)
 
     @field_validator("proporcao")
     @classmethod
