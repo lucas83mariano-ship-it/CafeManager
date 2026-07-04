@@ -215,3 +215,60 @@ class Receita(BaseModel):
             )
 
         return valor
+
+
+# Schemas de update
+
+class CafeUpdate(BaseModel):
+
+    empresa: str | None = None
+
+    nome_cafe: str | None = None
+
+    pontuacao: float | None = None
+
+    fazenda: str | None = None
+
+    produtor: str | None = None
+
+    altitude: int | None = None
+
+    torra: str | None = None
+
+    aroma: str | None = None
+
+    sabor: str | None = None
+
+    retrogosto: str | None = None
+
+    tipo_cafe: str | None = None
+
+    processamento: str | None = None
+
+    origem: str | None = None
+
+    link_produto: str | None = None
+
+class ReceitaUpdate(BaseModel):
+
+    cafe_id: int | None = None
+
+    metodo: MetodoCafe | None = None
+
+    moedor: str | None = None
+
+    clique: str | None = None
+
+    proporcao: float | None = None
+
+    agua_ml: float | None = None
+
+    cafe_g: float | None = None
+    
+    data_receita: date | None = None
+
+    avaliacao: float | None = None
+
+    favorita: bool | None = None
+
+    comentarios: str | None = Field (default=None, max_length=2000)

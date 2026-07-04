@@ -1,11 +1,10 @@
-from fastapi import (FastAPI, HTTPException)
+from fastapi import FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.database import (engine, SessionLocal)
-from app.models import (Base, CafeDB, ReceitaDB)
-from app.schemas import Cafe, Receita, MetodoCafe
+from app.database import engine, SessionLocal
+from app.models import Base, CafeDB, ReceitaDB
+from app.schemas import Cafe, Receita, MetodoCafe, CafeUpdate, ReceitaUpdate
 from datetime import date
-#from typing import Optional
 
 app = FastAPI()
 
@@ -170,7 +169,15 @@ def buscar_cafe(id: int):
             "empresa": cafe.empresa,
             "nome_cafe": cafe.nome_cafe,
             "pontuacao": cafe.pontuacao,
+            "fazenda": cafe.fazenda,
+            "produtor": cafe.produtor,
             "altitude": cafe.altitude,
+            "torra": cafe.torra,
+            "aroma": cafe.aroma,
+            "sabor": cafe.sabor,
+            "retrogosto": cafe.retrogosto,
+            "tipo_cafe": cafe.tipo_cafe,
+            "processamento": cafe.processamento,
             "origem": cafe.origem,
             "link_produto": cafe.link_produto
         }
@@ -211,7 +218,15 @@ def listar_cafes(nome_cafe: str = None):
                 "empresa": cafe.empresa,
                 "nome_cafe": cafe.nome_cafe,
                 "pontuacao": cafe.pontuacao,
+                "fazenda": cafe.fazenda,
+                "produtor": cafe.produtor,
                 "altitude": cafe.altitude,
+                "torra": cafe.torra,
+                "aroma": cafe.aroma,
+                "sabor": cafe.sabor,
+                "retrogosto": cafe.retrogosto,
+                "tipo_cafe": cafe.tipo_cafe,
+                "processamento": cafe.processamento,
                 "origem": cafe.origem,
                 "link_produto": cafe.link_produto
             }
@@ -223,16 +238,192 @@ def listar_cafes(nome_cafe: str = None):
                 "id": cafe.id,
                 "empresa": cafe.empresa,
                 "nome_cafe": cafe.nome_cafe,
-                "id": cafe.id,
-                "empresa": cafe.empresa,
-                "nome_cafe": cafe.nome_cafe,
                 "pontuacao": cafe.pontuacao,
+                "fazenda": cafe.fazenda,
+                "produtor": cafe.produtor,
                 "altitude": cafe.altitude,
+                "torra": cafe.torra,
+                "aroma": cafe.aroma,
+                "sabor": cafe.sabor,
+                "retrogosto": cafe.retrogosto,
+                "tipo_cafe": cafe.tipo_cafe,
+                "processamento": cafe.processamento,
                 "origem": cafe.origem,
                 "link_produto": cafe.link_produto
             }
             for cafe in cafes
         ]
+
+    finally:
+
+        db.close()
+
+@app.put("/cafes/{id}")
+def atualizar_cafe(
+    id: int,
+    cafe: Cafe
+):
+
+    db: Session = SessionLocal()
+
+    try:
+
+        cafe_db = (
+            db.query(CafeDB)
+            .filter(
+                CafeDB.id == id
+            )
+            .first()
+        )
+
+        if not cafe_db:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Café não encontrado"
+            )
+
+        cafe_existente = (
+            db.query(CafeDB)
+            .filter(
+                CafeDB.nome_cafe == cafe.nome_cafe,
+                CafeDB.id != id
+            )
+            .first()
+        )
+
+        if cafe_existente:
+
+            raise HTTPException(
+                status_code=409,
+                detail="Já existe um café com esse nome"
+            )
+
+        cafe_db.empresa = cafe.empresa
+        cafe_db.nome_cafe = cafe.nome_cafe
+
+        if cafe.pontuacao is not None:
+            cafe_db.pontuacao = cafe.pontuacao
+
+        if cafe.fazenda is not None:
+            cafe_db.fazenda = cafe.fazenda
+
+        if cafe.produtor is not None:
+            cafe_db.produtor = cafe.produtor
+
+        if cafe.altitude is not None:
+            cafe_db.altitude = cafe.altitude
+
+        if cafe.torra is not None:
+            cafe_db.torra = cafe.torra
+
+        if cafe.aroma is not None:
+            cafe_db.aroma = cafe.aroma
+
+        if cafe.sabor is not None:
+            cafe_db.sabor = cafe.sabor
+
+        if cafe.retrogosto is not None:
+            cafe_db.retrogosto = cafe.retrogosto
+
+        if cafe.tipo_cafe is not None:
+            cafe_db.tipo_cafe = cafe.tipo_cafe
+
+        if cafe.processamento is not None:
+            cafe_db.processamento = cafe.processamento
+
+        if cafe.origem is not None:
+            cafe_db.origem = cafe.origem
+
+        if cafe.link_produto is not None:
+            cafe_db.link_produto = cafe.link_produto
+
+        db.commit()
+
+        db.refresh(cafe_db)
+
+        return {
+            "id": cafe_db.id,
+            "empresa": cafe_db.empresa,
+            "nome_cafe": cafe_db.nome_cafe,
+            "pontuacao": cafe_db.pontuacao,
+            "fazenda": cafe_db.fazenda,
+            "produtor": cafe_db.produtor,
+            "altitude": cafe_db.altitude,
+            "torra": cafe_db.torra,
+            "aroma": cafe_db.aroma,
+            "sabor": cafe_db.sabor,
+            "retrogosto": cafe_db.retrogosto,
+            "tipo_cafe": cafe_db.tipo_cafe,
+            "processamento": cafe_db.processamento,
+            "origem": cafe_db.origem,
+            "link_produto": cafe_db.link_produto
+        }
+
+    finally:
+
+        db.close()
+
+@app.patch("/cafes/{id}")
+def atualizar_cafe_parcial(
+    id: int,
+    cafe: CafeUpdate
+):
+
+    db: Session = SessionLocal()
+
+    try:
+
+        cafe_db = (
+            db.query(CafeDB)
+            .filter(
+                CafeDB.id == id
+            )
+            .first()
+        )
+
+        if not cafe_db:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Café não encontrado"
+            )
+
+        dados_atualizacao = (
+            cafe.model_dump(
+                exclude_unset=True
+            )
+        )
+
+        for campo, valor in dados_atualizacao.items():
+
+            setattr(
+                cafe_db,
+                campo,
+                valor
+            )
+
+        db.commit()
+
+        db.refresh(cafe_db)
+
+        return {
+            "id": cafe_db.id,
+            "empresa": cafe_db.empresa,
+            "nome_cafe": cafe_db.nome_cafe,
+            "pontuacao": cafe_db.pontuacao,
+            "fazenda": cafe_db.fazenda,
+            "produtor": cafe_db.produtor,
+            "altitude": cafe_db.altitude,
+            "torra": cafe_db.torra,
+            "aroma": cafe_db.aroma,
+            "sabor": cafe_db.sabor,
+            "retrogosto": cafe_db.retrogosto,
+            "tipo_cafe": cafe_db.tipo_cafe,
+            "processamento": cafe_db.processamento,
+            "origem": cafe_db.origem,
+            "link_produto": cafe_db.link_produto
+        }
 
     finally:
 
@@ -306,6 +497,7 @@ def deletar_cafe_por_nome(nome_cafe: str):
 
 
 # Rotas para receitas
+
 @app.post("/receitas")
 def cadastrar_receita(receita: Receita):
 
@@ -521,6 +713,272 @@ def buscar_receita(id: int):
             "avaliacao": receita.avaliacao,
             "favorita": receita.favorita,
             "comentarios": receita.comentarios
+        }
+
+    finally:
+
+        db.close()
+
+@app.put("/receitas/{id}")
+def atualizar_receita(
+    id: int,
+    receita: Receita
+):
+
+    db: Session = SessionLocal()
+
+    try:
+
+        receita_db = (
+            db.query(ReceitaDB)
+            .filter(
+                ReceitaDB.id == id
+            )
+            .first()
+        )
+
+        if not receita_db:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Receita não encontrada"
+            )
+
+        if receita.cafe_id:
+
+            cafe = (
+                db.query(CafeDB)
+                .filter(
+                    CafeDB.id == receita.cafe_id
+                )
+                .first()
+            )
+
+            if not cafe:
+
+                raise HTTPException(
+                    status_code=404,
+                    detail="Café informado não existe"
+                )
+
+        proporcao = (
+            receita.proporcao
+            if receita.proporcao is not None
+            else receita_db.proporcao
+        )
+
+        agua_ml = (
+            receita.agua_ml
+            if receita.agua_ml is not None
+            else receita_db.agua_ml
+        )
+
+        cafe_g = (
+            receita.cafe_g
+            if receita.cafe_g is not None
+            else receita_db.cafe_g
+        )
+
+        campos_preenchidos = sum([
+            proporcao is not None,
+            agua_ml is not None,
+            cafe_g is not None
+        ])
+
+        if campos_preenchidos < 2:
+
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Informe pelo menos dois dos campos: "
+                    "proporcao, agua_ml e cafe_g"
+                )
+            )
+
+        if campos_preenchidos == 2:
+
+            if proporcao is None:
+                proporcao = agua_ml / cafe_g
+
+            elif agua_ml is None:
+                agua_ml = proporcao * cafe_g
+
+            elif cafe_g is None:
+                cafe_g = agua_ml / proporcao
+
+        receita_db.cafe_id = receita.cafe_id
+
+        if receita.metodo is not None:
+            receita_db.metodo = receita.metodo
+
+        if receita.moedor is not None:
+            receita_db.moedor = receita.moedor
+
+        if receita.clique is not None:
+            receita_db.clique = receita.clique
+
+        receita_db.proporcao = round(proporcao, 2)
+        receita_db.agua_ml = round(agua_ml, 2)
+        receita_db.cafe_g = round(cafe_g, 2)
+
+        if receita.data_receita is not None:
+            receita_db.data_receita = receita.data_receita
+
+        if receita.avaliacao is not None:
+            receita_db.avaliacao = receita.avaliacao
+
+        if receita.favorita is not None:
+            receita_db.favorita = receita.favorita
+
+        if receita.comentarios is not None:
+            receita_db.comentarios = receita.comentarios
+
+        db.commit()
+
+        db.refresh(receita_db)
+
+        return {
+            "id": receita_db.id,
+            "cafe_id": receita_db.cafe_id,
+            "metodo": receita_db.metodo,
+            "moedor": receita_db.moedor,
+            "clique": receita_db.clique,
+            "proporcao": receita_db.proporcao,
+            "agua_ml": receita_db.agua_ml,
+            "cafe_g": receita_db.cafe_g,
+            "data_receita": receita_db.data_receita,
+            "avaliacao": receita_db.avaliacao,
+            "favorita": receita_db.favorita,
+            "comentarios": receita_db.comentarios
+        }
+
+    finally:
+
+        db.close()
+
+@app.patch("/receitas/{id}")
+def atualizar_receita_parcial(
+    id: int,
+    receita: ReceitaUpdate
+):
+
+    db: Session = SessionLocal()
+
+    try:
+
+        receita_db = (
+            db.query(ReceitaDB)
+            .filter(
+                ReceitaDB.id == id
+            )
+            .first()
+        )
+
+        if not receita_db:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Receita não encontrada"
+            )
+
+        dados_atualizacao = (
+            receita.model_dump(
+                exclude_unset=True
+            )
+        )
+
+        # valida cafe_id caso tenha sido informado
+        if (
+            "cafe_id" in dados_atualizacao
+            and
+            dados_atualizacao["cafe_id"] is not None
+        ):
+
+            cafe = (
+                db.query(CafeDB)
+                .filter(
+                    CafeDB.id ==
+                    dados_atualizacao["cafe_id"]
+                )
+                .first()
+            )
+
+            if not cafe:
+
+                raise HTTPException(
+                    status_code=404,
+                    detail="Café informado não existe"
+                )
+
+        # aplica alterações recebidas
+        for campo, valor in dados_atualizacao.items():
+
+            setattr(
+                receita_db,
+                campo,
+                valor
+            )
+
+        campos_preenchidos = sum([
+            receita_db.proporcao is not None,
+            receita_db.agua_ml is not None,
+            receita_db.cafe_g is not None
+        ])
+
+        if campos_preenchidos < 2:
+
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Informe pelo menos dois dos campos: "
+                    "proporcao, agua_ml e cafe_g"
+                )
+            )
+
+        # cálculo automático
+        if campos_preenchidos == 2:
+
+            if receita_db.proporcao is None:
+
+                receita_db.proporcao = round(
+                    receita_db.agua_ml /
+                    receita_db.cafe_g,
+                    2
+                )
+
+            elif receita_db.agua_ml is None:
+
+                receita_db.agua_ml = round(
+                    receita_db.proporcao *
+                    receita_db.cafe_g,
+                    2
+                )
+
+            elif receita_db.cafe_g is None:
+
+                receita_db.cafe_g = round(
+                    receita_db.agua_ml /
+                    receita_db.proporcao,
+                    2
+                )
+
+        db.commit()
+
+        db.refresh(receita_db)
+
+        return {
+            "id": receita_db.id,
+            "cafe_id": receita_db.cafe_id,
+            "metodo": receita_db.metodo,
+            "moedor": receita_db.moedor,
+            "clique": receita_db.clique,
+            "proporcao": receita_db.proporcao,
+            "agua_ml": receita_db.agua_ml,
+            "cafe_g": receita_db.cafe_g,
+            "data_receita": receita_db.data_receita,
+            "avaliacao": receita_db.avaliacao,
+            "favorita": receita_db.favorita,
+            "comentarios": receita_db.comentarios
         }
 
     finally:
