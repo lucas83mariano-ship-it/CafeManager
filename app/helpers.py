@@ -101,6 +101,25 @@ def validar_cafe_informado(db: Session, cafe_id: int):
     return cafe
 
 
+def validar_nome_cafe_disponivel(
+    db: Session,
+    nome_cafe: str,
+    cafe_id_atual: int | None = None,
+):
+    consulta = db.query(CafeDB).filter(CafeDB.nome_cafe.ilike(nome_cafe))
+
+    if cafe_id_atual is not None:
+        consulta = consulta.filter(CafeDB.id != cafe_id_atual)
+
+    cafe_existente = consulta.first()
+
+    if cafe_existente:
+        raise HTTPException(
+            status_code=409,
+            detail="Já existe um café com esse nome",
+        )
+
+
 def calcular_medidas_receita(
     proporcao: float | None,
     agua_ml: float | None,
@@ -161,13 +180,17 @@ def calcular_medidas_atualizacao_receita(
     dados_atualizacao: dict,
 ):
     campos_medida = ("proporcao", "agua_ml", "cafe_g")
+
     medidas_enviadas = {
         campo: dados_atualizacao[campo]
         for campo in campos_medida
         if campo in dados_atualizacao
     }
+
     quantidade_enviada = len(medidas_enviadas)
 
+    # Nenhum campo de medida enviado:
+    # mantém exatamente o que já existe
     if quantidade_enviada == 0:
         return (
             arredondar_medida(receita_atual.proporcao),
@@ -175,6 +198,8 @@ def calcular_medidas_atualizacao_receita(
             arredondar_medida(receita_atual.cafe_g),
         )
 
+    # Apenas um campo enviado:
+    # atualiza somente ele, preservando os demais
     if quantidade_enviada == 1:
         return (
             arredondar_medida(
@@ -188,6 +213,8 @@ def calcular_medidas_atualizacao_receita(
             ),
         )
 
+    # Dois campos enviados:
+    # calcula somente o terceiro utilizando APENAS os dois enviados
     if quantidade_enviada == 2:
         return calcular_medidas_receita(
             medidas_enviadas.get("proporcao"),
@@ -195,6 +222,8 @@ def calcular_medidas_atualizacao_receita(
             medidas_enviadas.get("cafe_g"),
         )
 
+    # Três campos enviados:
+    # respeita exatamente os valores enviados
     return (
         arredondar_medida(medidas_enviadas["proporcao"]),
         arredondar_medida(medidas_enviadas["agua_ml"]),

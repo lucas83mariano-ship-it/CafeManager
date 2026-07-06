@@ -7,12 +7,29 @@ from app.helpers import (
     buscar_cafe_ou_404,
     serializar_cafe,
     serializar_receita_do_cafe,
+    validar_nome_cafe_disponivel,
 )
 from app.models import CafeDB, ReceitaDB
 from app.schemas import Cafe, CafeUpdate
 
 
 router = APIRouter()
+
+
+CAMPOS_OPCIONAIS_CAFE = (
+    "pontuacao",
+    "fazenda",
+    "produtor",
+    "altitude",
+    "torra",
+    "aroma",
+    "sabor",
+    "retrogosto",
+    "tipo_cafe",
+    "processamento",
+    "origem",
+    "link_produto",
+)
 
 
 @router.post("/cafes")
@@ -32,17 +49,7 @@ def cadastrar_cafe(cafe: Cafe, db: Session = Depends(get_db)):
             detail="Nome do café é obrigatório",
         )
 
-    cafe_existente = (
-        db.query(CafeDB)
-        .filter(CafeDB.nome_cafe.ilike(nome_cafe))
-        .first()
-    )
-
-    if cafe_existente:
-        raise HTTPException(
-            status_code=409,
-            detail="Já existe um café com esse nome",
-        )
+    validar_nome_cafe_disponivel(db, nome_cafe)
 
     novo_cafe = CafeDB(
         empresa=empresa,
@@ -113,42 +120,24 @@ def listar_cafes(nome_cafe: str = None, db: Session = Depends(get_db)):
 
 
 @router.put("/cafes/{id}")
-def atualizar_cafe(id: int, cafe: Cafe, db: Session = Depends(get_db)):
+def atualizar_cafe(
+    id: int,
+    cafe: Cafe,
+    db: Session = Depends(get_db),
+):
     cafe_db = buscar_cafe_ou_404(db, id)
 
-    cafe_existente = (
-        db.query(CafeDB)
-        .filter(
-            CafeDB.nome_cafe == cafe.nome_cafe,
-            CafeDB.id != id,
-        )
-        .first()
-    )
+    empresa = cafe.empresa.strip()
+    nome_cafe = cafe.nome_cafe.strip()
 
-    if cafe_existente:
-        raise HTTPException(
-            status_code=409,
-            detail="Já existe um café com esse nome",
-        )
+    validar_nome_cafe_disponivel(db, nome_cafe, id)
 
-    cafe_db.empresa = cafe.empresa
-    cafe_db.nome_cafe = cafe.nome_cafe
+    cafe_db.empresa = empresa
+    cafe_db.nome_cafe = nome_cafe
 
-    for campo in (
-        "pontuacao",
-        "fazenda",
-        "produtor",
-        "altitude",
-        "torra",
-        "aroma",
-        "sabor",
-        "retrogosto",
-        "tipo_cafe",
-        "processamento",
-        "origem",
-        "link_produto",
-    ):
+    for campo in CAMPOS_OPCIONAIS_CAFE:
         valor = getattr(cafe, campo)
+
         if valor is not None:
             setattr(cafe_db, campo, valor)
 
@@ -165,10 +154,37 @@ def atualizar_cafe_parcial(
     db: Session = Depends(get_db),
 ):
     cafe_db = buscar_cafe_ou_404(db, id)
+
     dados_atualizacao = cafe.model_dump(exclude_unset=True)
 
-    for campo, valor in dados_atualizacao.items():
-        setattr(cafe_db, campo, valor)
+    if not dados_atualizacao:
+        raise HTTPException(
+            status_code=422,
+            detail="Informe pelo menos um campo para atualização."
+        )
+
+    if "nome_cafe" in dados_atualizacao:
+        validar_nome_cafe_disponivel(
+            db,
+            dados_atualizacao["nome_cafe"],
+            id,
+        )
+
+    for campo in ("empresa", "nome_cafe"):
+        if campo in dados_atualizacao:
+            valor = dados_atualizacao[campo]
+
+            if isinstance(valor, str):
+                valor = valor.strip()
+
+            setattr(cafe_db, campo, valor)
+
+    for campo in CAMPOS_OPCIONAIS_CAFE:
+        if campo in dados_atualizacao:
+            valor = dados_atualizacao[campo]
+
+            if valor is not None:
+                setattr(cafe_db, campo, valor)
 
     db.commit()
     db.refresh(cafe_db)
@@ -189,7 +205,10 @@ def deletar_cafe(id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/cafes")
-def deletar_cafe_por_nome(nome_cafe: str, db: Session = Depends(get_db)):
+def deletar_cafe_por_nome(
+    nome_cafe: str,
+    db: Session = Depends(get_db),
+):
     cafe = (
         db.query(CafeDB)
         .filter(CafeDB.nome_cafe.ilike(nome_cafe))
@@ -211,8 +230,12 @@ def deletar_cafe_por_nome(nome_cafe: str, db: Session = Depends(get_db)):
 
 
 @router.get("/cafes/{id}/receitas")
-def listar_receitas_do_cafe(id: int, db: Session = Depends(get_db)):
+def listar_receitas_do_cafe(
+    id: int,
+    db: Session = Depends(get_db),
+):
     cafe = buscar_cafe_ou_404(db, id)
+
     receitas = (
         db.query(ReceitaDB)
         .filter(ReceitaDB.cafe_id == id)

@@ -17,6 +17,17 @@ from app.schemas import Receita, ReceitaUpdate
 router = APIRouter()
 
 
+CAMPOS_OPCIONAIS_RECEITA = (
+    "metodo",
+    "moedor",
+    "clique",
+    "data_receita",
+    "avaliacao",
+    "favorita",
+    "comentarios",
+)
+
+
 @router.post("/receitas")
 def cadastrar_receita(receita: Receita, db: Session = Depends(get_db)):
     if receita.cafe_id is not None:
@@ -76,7 +87,7 @@ def atualizar_receita(
         for campo in receita.model_fields_set
     }
 
-    if receita.cafe_id:
+    if "cafe_id" in dados_atualizacao and receita.cafe_id is not None:
         validar_cafe_informado(db, receita.cafe_id)
 
     proporcao, agua_ml, cafe_g = calcular_medidas_atualizacao_receita(
@@ -87,18 +98,12 @@ def atualizar_receita(
     if "cafe_id" in dados_atualizacao:
         receita_db.cafe_id = dados_atualizacao["cafe_id"]
 
-    for campo in (
-        "metodo",
-        "moedor",
-        "clique",
-        "data_receita",
-        "avaliacao",
-        "favorita",
-        "comentarios",
-    ):
-        valor = getattr(receita, campo)
-        if valor is not None:
-            setattr(receita_db, campo, valor)
+    for campo in CAMPOS_OPCIONAIS_RECEITA:
+        if campo in dados_atualizacao:
+            valor = dados_atualizacao[campo]
+
+            if valor is not None:
+                setattr(receita_db, campo, valor)
 
     receita_db.proporcao = proporcao
     receita_db.agua_ml = agua_ml
@@ -119,19 +124,33 @@ def atualizar_receita_parcial(
     receita_db = buscar_receita_ou_404(db, id)
     dados_atualizacao = receita.model_dump(exclude_unset=True)
 
+    if not dados_atualizacao:
+        raise HTTPException(
+            status_code=422,
+            detail="Informe pelo menos um campo para atualização."
+        )
+
     if (
         "cafe_id" in dados_atualizacao
         and dados_atualizacao["cafe_id"] is not None
     ):
         validar_cafe_informado(db, dados_atualizacao["cafe_id"])
 
-    for campo, valor in dados_atualizacao.items():
-        setattr(receita_db, campo, valor)
-
     proporcao, agua_ml, cafe_g = calcular_medidas_atualizacao_receita(
         receita_db,
         dados_atualizacao,
     )
+
+    if "cafe_id" in dados_atualizacao:
+        receita_db.cafe_id = dados_atualizacao["cafe_id"]
+
+    for campo in CAMPOS_OPCIONAIS_RECEITA:
+        if campo in dados_atualizacao:
+            valor = dados_atualizacao[campo]
+
+            if valor is not None:
+                setattr(receita_db, campo, valor)
+
     receita_db.proporcao = proporcao
     receita_db.agua_ml = agua_ml
     receita_db.cafe_g = cafe_g
