@@ -1,73 +1,76 @@
-import { useEffect, useState } from "react";
-
-import api from "../services/api";
+import Card from "../components/ui/card";
+import Loading from "../components/ui/loading";
+import CafesTable from "../components/cafes-table";
+import useCafes from "../hooks/use-cafes";
+import { useNavigate } from "react-router-dom";
+import Button from "../components/ui/button";
 import "../styles/cafes.css";
 
 function Cafes() {
 
-    const [cafes, setCafes] = useState([]);
+    const {
 
-    useEffect(() => {
+        cafes,
+        loading,
+        erro,
+        carregar,
 
-        async function carregar() {
+    } = useCafes();
 
-            try {
+    const navigate = useNavigate();
 
-                const resposta = await api.get("/cafes");
+    if (loading) {
 
-                setCafes(resposta.data);
+        return <Loading />;
 
-            } catch (erro) {
+    }
 
-                console.error(erro);
-
-            }
-
-        }
-
-        carregar();
-
-    }, []);
+    if (erro) {
+        return (
+            <Card>
+                <p>{erro}</p>
+            </Card>
+            );
+    }
 
     return (
 
         <>
-            <h1>Cafés</h1>
+    
+            <div className="page-header">
+        
+                <h1>Cafés</h1>
+        
+                <Button
+                    onClick={() => navigate("/cafes/cadastrar")}
+                >
+                
+                    Novo Café
+        
+                </Button>
+        
+            </div>
+        
+            <p className="table-info">
+                
+                Total de cafés: {cafes.length}
+                
+            </p>
+            
+            <Card>
+        
+                <CafesTable 
+                    
+                    cafes={cafes}
+                    
+                    onDelete={carregar}
 
-            <table>
-
-                <thead>
-
-                    <tr>
-                        <th>ID</th>
-                        <th>Empresa</th>
-                        <th>Nome</th>
-                        <th>Pontuação</th>
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    {cafes.map((cafe) => (
-
-                        <tr key={cafe.id}>
-
-                            <td>{cafe.id}</td>
-                            <td>{cafe.empresa}</td>
-                            <td>{cafe.nome_cafe}</td>
-                            <td>{cafe.pontuacao}</td>
-
-                        </tr>
-
-                    ))}
-
-                </tbody>
-
-            </table>
-
+                />
+        
+            </Card>
+        
         </>
-
+    
     );
 
 }

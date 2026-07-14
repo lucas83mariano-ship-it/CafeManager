@@ -8,8 +8,8 @@ table {
 
 th {
 
-    background: #1f2937;
-    color: white;
+    background: var(--brown);
+    color: #FFF9F2;
     text-align: left;
     padding: 12px;
 
@@ -18,12 +18,50 @@ th {
 td {
 
     padding: 10px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--border);
 
 }
 
 tbody tr:hover {
 
-    background: #f3f4f6;
+    background: #F7F2E8;
+
+}
+
+.page-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+    margin-bottom: 24px;
+
+}
+
+.page-header p {
+
+    margin-top: 6px;
+
+    color: #666;
+
+    font-size: 14px;
+
+}
+
+.page-header h1 {
+
+    margin: 0;
+
+}
+
+.table-info {
+
+    margin-bottom: 8px;
+
+    color: #666;
+
+    font-size: 14px;
 
 }

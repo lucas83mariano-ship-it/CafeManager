@@ -6,7 +6,7 @@ import Dashboard from "../pages/dashboard";
 import Cafes from "../pages/cafes";
 import CadastrarCafe from "../pages/cadastrar-cafe";
 import EditarCafe from "../pages/editar-cafe";
-
+import Calculadora from "../pages/calculadora";
 import Receitas from "../pages/receitas";
 import CadastrarReceita from "../pages/cadastrar-receita";
 import EditarReceita from "../pages/editar-receita";
@@ -35,7 +35,7 @@ function AppRoutes() {
                 />
 
                 <Route
-                    path="/cafes/novo"
+                    path="/cafes/cadastrar"
                     element={
                         <MainLayout>
                             <CadastrarCafe />
@@ -44,7 +44,7 @@ function AppRoutes() {
                 />
 
                 <Route
-                    path="/cafes/:id"
+                    path="/cafes/editar/:id"
                     element={
                         <MainLayout>
                             <EditarCafe />
@@ -62,7 +62,7 @@ function AppRoutes() {
                 />
 
                 <Route
-                    path="/receitas/nova"
+                    path="/receitas/cadastrar"
                     element={
                         <MainLayout>
                             <CadastrarReceita />
@@ -71,10 +71,19 @@ function AppRoutes() {
                 />
 
                 <Route
-                    path="/receitas/:id"
+                    path="/receitas/editar/:id"
                     element={
                         <MainLayout>
                             <EditarReceita />
+                        </MainLayout>
+                    }
+                />
+
+                <Route
+                    path="/calculadora"
+                    element={
+                        <MainLayout>
+                            <Calculadora />
                         </MainLayout>
                     }
                 />

@@ -1,0 +1,19 @@
+.icon-button {
+
+    padding: 6px 10px;
+
+    border: 1px solid #d0d0d0;
+
+    background: white;
+
+    cursor: pointer;
+
+    border-radius: 4px;
+
+}
+
+.icon-button:hover {
+
+    background: #f3f3f3;
+
+}

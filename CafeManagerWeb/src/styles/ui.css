@@ -1,0 +1,58 @@
+.btn {
+
+    background: #2563eb;
+    color: white;
+
+    border: none;
+
+    padding: 10px 16px;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+}
+
+.btn:hover {
+
+    background: #1d4ed8;
+
+}
+
+.card {
+
+    background: white;
+
+    padding: 20px;
+
+    border-radius: 8px;
+
+    box-shadow:
+
+        0 2px 8px rgba(0,0,0,.08);
+
+}
+
+.input-group {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+
+    margin-bottom: 16px;
+
+}
+
+.input-group input {
+
+    padding: 10px;
+
+    border: 1px solid #ccc;
+
+    border-radius: 6px;
+
+}

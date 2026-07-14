@@ -1,0 +1,93 @@
+.input-group {
+
+    display: flex;
+
+    flex-direction: column;
+
+    margin-bottom: 22px;
+
+}
+
+.input-group label {
+
+    margin-bottom: 8px;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    color: var(--text-main);
+
+}
+
+.input-group input {
+
+    padding: 14px 16px;
+
+    border: 1px solid var(--border);
+
+    border-radius: 8px;
+
+    background: white;
+
+    color: var(--text-main);
+
+    font-size: 16px;
+
+    transition: .2s;
+
+}
+
+.input-group input:focus {
+
+    outline: none;
+
+    border-color: var(--brown);
+
+    box-shadow: 0 0 0 3px rgba(122,90,58,.15);
+
+}
+
+.input-destaque {
+
+    background: #fff8dc;
+
+    border: 2px solid var(--brown);
+
+    box-shadow: 0 0 8px rgba(110, 70, 38, .15);
+
+}
+
+.input-message {
+
+    margin-top: 0px;
+
+    color: var(--brown);
+
+    font-size: 13px;
+
+    font-style: italic;
+
+}
+
+.input-error{
+
+    margin-top:4px;
+
+    margin-bottom:6px;
+
+    color:#b3261e;
+
+    font-size:13px;
+
+    font-weight:600;
+
+}
+
+.input-erro{
+
+    border:2px solid #b3261e !important;
+
+    background:#fff8f8;
+
+}

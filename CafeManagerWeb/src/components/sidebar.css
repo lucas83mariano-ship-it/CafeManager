@@ -1,7 +1,7 @@
 .sidebar {
     width: 240px;
-    background: #1f2937;
-    color: white;
+    background: #4B3525;
+    color: #F8F4EC;
     padding: 24px;
     box-sizing: border-box;
 }
@@ -9,6 +9,7 @@
 .sidebar h2 {
     margin-bottom: 40px;
     font-size: 24px;
+    color: #FFF9F2;
 }
 
 .sidebar nav {
@@ -18,7 +19,7 @@
 }
 
 .sidebar a {
-    color: white;
+    color: #F0E6DA;
     text-decoration: none;
     padding: 12px;
     border-radius: 6px;
@@ -30,7 +31,7 @@
 }
 
 .sidebar a.active {
-    background: #d4a373;
-    color: #1f2937;
+    background: #D8B48A;
+    color: #3E2E22;
     font-weight: bold;
 }

@@ -1,0 +1,57 @@
+.calculadora-layout {
+
+    display: flex;
+
+    gap: 32px;
+
+    align-items: flex-start;
+
+}
+
+.calculadora-card {
+
+    width: 420px;
+
+}
+
+.calculadora-info {
+
+    flex: 1;
+
+    min-height: 320px;
+
+}
+
+.calc-input {
+
+    font-size: 26px;
+
+    font-weight: bold;
+
+    text-align: center;
+
+    height: 56px;
+
+}
+
+.calc-input {
+
+    font-size: 28px !important;
+
+    font-weight: bold;
+
+    text-align: center;
+
+    height: 64px;
+
+}
+
+.calculadora-botoes {
+
+    display: flex;
+
+    gap: 12px;
+
+    margin-top: 24px;
+
+}

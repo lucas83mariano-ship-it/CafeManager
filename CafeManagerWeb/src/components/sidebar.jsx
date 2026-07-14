@@ -3,7 +3,9 @@ import { NavLink } from "react-router-dom";
 import "./sidebar.css";
 
 function Sidebar() {
+
     return (
+
         <aside className="sidebar">
 
             <h2>Cafe Manager</h2>
@@ -22,10 +24,16 @@ function Sidebar() {
                     Receitas
                 </NavLink>
 
+                <NavLink to="/calculadora">
+                    Calculadora
+                </NavLink>
+
             </nav>
 
         </aside>
+
     );
+
 }
 
 export default Sidebar;
