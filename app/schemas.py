@@ -290,3 +290,22 @@ class ReceitaUpdate(BaseModel):
     @classmethod
     def validar_avaliacao(cls, valor):
         return validar_avaliacao_receita(valor)
+    
+class Usuario(BaseModel):
+
+    nome: str
+    email: str
+    senha: str
+
+class LoginRequest(BaseModel):
+
+    email: str
+
+    senha: str
+
+
+class LoginResponse(BaseModel):
+
+    access_token: str
+
+    token_type: str = "bearer"

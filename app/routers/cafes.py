@@ -9,8 +9,9 @@ from app.helpers import (
     serializar_receita_do_cafe,
     validar_nome_cafe_disponivel,
 )
-from app.models import CafeDB, ReceitaDB
+from app.models import CafeDB, ReceitaDB, UsuarioDB
 from app.schemas import Cafe, CafeUpdate
+from app.auth import get_current_user
 
 
 router = APIRouter()
@@ -33,7 +34,11 @@ CAMPOS_OPCIONAIS_CAFE = (
 
 
 @router.post("/cafes")
-def cadastrar_cafe(cafe: Cafe, db: Session = Depends(get_db)):
+def cadastrar_cafe(
+    cafe: Cafe, 
+    db: Session = Depends(get_db), 
+    usuario: UsuarioDB = Depends(get_current_user)
+):
     empresa = cafe.empresa.strip()
     nome_cafe = cafe.nome_cafe.strip()
 
@@ -66,6 +71,7 @@ def cadastrar_cafe(cafe: Cafe, db: Session = Depends(get_db)):
         processamento=cafe.processamento,
         origem=cafe.origem,
         link_produto=cafe.link_produto,
+        usuario_id=usuario.id,
     )
 
     db.add(novo_cafe)

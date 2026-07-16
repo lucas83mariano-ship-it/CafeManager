@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine
 from app.models import Base
-from app.routers import cafes, receitas
+from app.routers import cafes, receitas, usuarios, auth
 
 
 app = FastAPI()
@@ -22,6 +22,8 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(cafes.router)
 app.include_router(receitas.router)
+app.include_router(usuarios.router)
+app.include_router(auth.router)
 
 
 @app.get("/")

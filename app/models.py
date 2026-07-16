@@ -1,4 +1,4 @@
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, relationship
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, Boolean
 from datetime import date
 from pydantic import field_validator
@@ -42,6 +42,10 @@ class CafeDB(Base):
 
     link_produto = Column(String(300))
 
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"))
+
+    usuario = relationship("UsuarioDB", back_populates="cafes")
+
 class ReceitaDB(Base):
 
     __tablename__ = "receitas"
@@ -69,3 +73,23 @@ class ReceitaDB(Base):
     favorita = Column(Boolean, default=False)
     
     comentarios = Column(String(2000))
+
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"))
+
+    usuario = relationship("UsuarioDB", back_populates="receitas")
+
+class UsuarioDB(Base):
+
+    __tablename__ = "usuarios"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    nome = Column(String(200), nullable=False)
+
+    email = Column(String(200), unique=True, nullable=False)
+
+    senha_hash = Column(String(255), nullable=False)
+
+    cafes = relationship("CafeDB", back_populates="usuario")
+
+    receitas = relationship("ReceitaDB", back_populates="usuario")
