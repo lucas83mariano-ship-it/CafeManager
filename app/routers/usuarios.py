@@ -1,28 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.database import SessionLocal
+#from app.database import SessionLocal
 from app.models import UsuarioDB
-from app.schemas import Usuario
+from app.schemas import Usuario, UsuarioUpdate, UsuarioUpdateParcial, UsuarioResponse, UsuarioRoleUpdate
 from app.security import gerar_hash
+from app.dependencies import get_db
+from app.auth import get_current_user, get_current_admin
+from app.helpers import buscar_usuario_ou_404
 
 router = APIRouter(
     prefix="/usuarios",
     tags=["Usuários"]
 )
 
-
-def get_db():
-
-    db = SessionLocal()
-
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-@router.post("/")
+@router.post("/", response_model=UsuarioResponse, status_code=201)
 def cadastrar_usuario(
     usuario: Usuario,
     db: Session = Depends(get_db)
@@ -46,6 +38,7 @@ def cadastrar_usuario(
         nome=usuario.nome,
         email=usuario.email,
         senha_hash=gerar_hash(usuario.senha),
+        role="user"
 
     )
 
@@ -65,3 +58,202 @@ def listar_usuarios(
 ):
 
     return db.query(UsuarioDB).all()
+
+@router.get(
+    "/me",
+    response_model=UsuarioResponse,
+)
+def buscar_usuario_logado(
+    usuario: UsuarioDB = Depends(get_current_user),
+):
+
+    return usuario
+
+@router.put(
+    "/me",
+    response_model=UsuarioResponse,
+)
+def atualizar_usuario(
+    dados: UsuarioUpdate,
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
+):
+
+    usuario_existente = (
+        db.query(UsuarioDB)
+        .filter(
+            UsuarioDB.email == dados.email,
+            UsuarioDB.id != usuario.id,
+        )
+        .first()
+    )
+
+    if usuario_existente:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Já existe um usuário com este e-mail.",
+        )
+
+    usuario.nome = dados.nome.strip()
+
+    usuario.email = dados.email.strip()
+
+    db.commit()
+
+    db.refresh(usuario)
+
+    return usuario
+
+@router.patch(
+    "/me",
+    response_model=UsuarioResponse,
+)
+def atualizar_usuario_parcial(
+    dados: UsuarioUpdateParcial,
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
+):
+
+    atualizacao = dados.model_dump(exclude_unset=True)
+
+    if not atualizacao:
+
+        raise HTTPException(
+            status_code=422,
+            detail="Informe pelo menos um campo para atualização.",
+        )
+
+    if "email" in atualizacao:
+
+        email = atualizacao["email"].strip()
+
+        usuario_existente = (
+            db.query(UsuarioDB)
+            .filter(
+                UsuarioDB.email == email,
+                UsuarioDB.id != usuario.id,
+            )
+            .first()
+        )
+
+        if usuario_existente:
+
+            raise HTTPException(
+                status_code=400,
+                detail="Já existe um usuário com este e-mail.",
+            )
+
+        usuario.email = email
+
+    if "nome" in atualizacao:
+
+        usuario.nome = atualizacao["nome"].strip()
+
+    db.commit()
+
+    db.refresh(usuario)
+
+    return usuario
+
+@router.patch("/{id}/role")
+def alterar_role(
+
+    id: int,
+    dados: UsuarioRoleUpdate,
+    db: Session = Depends(get_db),
+    admin: UsuarioDB = Depends(get_current_admin),
+
+):
+
+    if dados.role not in ("user", "admin"):
+
+        raise HTTPException(
+            status_code=400,
+            detail="Role inválida.",
+        )
+
+    usuario = (
+        db.query(UsuarioDB)
+        .filter(UsuarioDB.id == id)
+        .first()
+    )
+
+    if not usuario:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Usuário não encontrado.",
+        )
+
+    usuario.role = dados.role
+
+    db.commit()
+
+    db.refresh(usuario)
+
+    return usuario
+
+@router.delete("/me")
+def excluir_usuario(
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
+):
+    
+    db.delete(usuario)
+
+    db.commit()
+
+    return {
+        "mensagem": (
+            "Conta removida com sucesso. "
+            "Todos os cafés e receitas cadastrados também foram excluídos."
+        )
+    }
+
+@router.delete("/{id}")
+def excluir_usuario_por_id(
+
+    id: int,
+    db: Session = Depends(get_db),
+    admin: UsuarioDB = Depends(get_current_admin),
+
+):
+
+    usuario = buscar_usuario_ou_404(
+        db,
+        id,
+    )
+
+    if usuario.id == admin.id:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Utilize DELETE /usuarios/me para excluir sua própria conta.",
+        )
+
+    if usuario.role == "admin":
+
+        total_admins = (
+            db.query(UsuarioDB)
+            .filter(UsuarioDB.role == "admin")
+            .count()
+        )
+
+        if total_admins == 1:
+
+            raise HTTPException(
+                status_code=400,
+                detail="Não é permitido excluir o último administrador.",
+            )
+
+    db.delete(usuario)
+
+    db.commit()
+
+    return {
+        "mensagem": (
+            "Usuário removido com sucesso. "
+            "Todos os cafés e receitas cadastrados também foram excluídos."
+        )
+    }

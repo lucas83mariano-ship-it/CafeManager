@@ -13,3 +13,6 @@ __pycache__/
 
 # Arquivos temporários
 *.log
+
+# Outro arquivo
+.env

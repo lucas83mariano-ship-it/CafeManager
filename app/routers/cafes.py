@@ -35,10 +35,11 @@ CAMPOS_OPCIONAIS_CAFE = (
 
 @router.post("/cafes")
 def cadastrar_cafe(
-    cafe: Cafe, 
-    db: Session = Depends(get_db), 
-    usuario: UsuarioDB = Depends(get_current_user)
+    cafe: Cafe,
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
 ):
+
     empresa = cafe.empresa.strip()
     nome_cafe = cafe.nome_cafe.strip()
 
@@ -54,7 +55,11 @@ def cadastrar_cafe(
             detail="Nome do café é obrigatório",
         )
 
-    validar_nome_cafe_disponivel(db, nome_cafe)
+    validar_nome_cafe_disponivel(
+        db,
+        usuario.id,
+        nome_cafe,
+    )
 
     novo_cafe = CafeDB(
         empresa=empresa,
@@ -75,40 +80,110 @@ def cadastrar_cafe(
     )
 
     db.add(novo_cafe)
+
     db.commit()
+
     db.refresh(novo_cafe)
 
     return serializar_cafe(novo_cafe)
 
 
+@router.get("/cafes")
+def listar_cafes(
+    nome_cafe: str = None,
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
+):
+
+    consulta = db.query(CafeDB)
+
+    if usuario.role != "admin":
+        consulta = consulta.filter(
+            CafeDB.usuario_id == usuario.id
+        )
+
+    if nome_cafe:
+
+        nome_procurado = nome_cafe.strip().lower()
+
+        cafe = (
+            consulta
+            .filter(func.lower(CafeDB.nome_cafe) == nome_procurado)
+            .first()
+        )
+
+        if not cafe:
+            raise HTTPException(
+                status_code=404,
+                detail="Café não encontrado.",
+            )
+
+        return serializar_cafe(cafe)
+
+    cafes = consulta.all()
+
+    return [
+        serializar_cafe(cafe)
+        for cafe in cafes
+    ]
+
+
 @router.get("/cafes/resumo")
-def listar_cafes_resumo(db: Session = Depends(get_db)):
-    cafes = db.query(CafeDB).all()
+def listar_cafes_resumo(
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
+):
+
+    consulta = db.query(CafeDB)
+
+    if usuario.role != "admin":
+        consulta = consulta.filter(
+            CafeDB.usuario_id == usuario.id
+        )
+
+    cafes = consulta.all()
 
     return [
         {
             "id": cafe.id,
             "nome_cafe": cafe.nome_cafe,
+            "usuario_id": cafe.usuario_id
         }
         for cafe in cafes
     ]
 
 
 @router.get("/cafes/{id}")
-def buscar_cafe(id: int, db: Session = Depends(get_db)):
-    cafe = buscar_cafe_ou_404(db, id)
+def buscar_cafe(
+    id: int,
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
+):
+
+    cafe = buscar_cafe_ou_404(
+        db,
+        id,
+        usuario,
+    )
 
     return serializar_cafe(cafe)
 
 
 @router.get("/cafes")
-def listar_cafes(nome_cafe: str = None, db: Session = Depends(get_db)):
+def listar_cafes(
+    nome_cafe: str = None,
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
+):
     if nome_cafe:
         nome_procurado = nome_cafe.strip().lower()
 
         cafe = (
             db.query(CafeDB)
-            .filter(func.lower(CafeDB.nome_cafe) == nome_procurado)
+            .filter(
+                CafeDB.usuario_id == usuario.id,
+                func.lower(CafeDB.nome_cafe) == nome_procurado,
+            )
             .first()
         )
 
@@ -120,9 +195,16 @@ def listar_cafes(nome_cafe: str = None, db: Session = Depends(get_db)):
 
         return serializar_cafe(cafe)
 
-    cafes = db.query(CafeDB).all()
+    cafes = (
+        db.query(CafeDB)
+        .filter(CafeDB.usuario_id == usuario.id)
+        .all()
+    )
 
-    return [serializar_cafe(cafe) for cafe in cafes]
+    return [
+        serializar_cafe(cafe)
+        for cafe in cafes
+    ]
 
 
 @router.put("/cafes/{id}")
@@ -130,13 +212,19 @@ def atualizar_cafe(
     id: int,
     cafe: Cafe,
     db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
 ):
-    cafe_db = buscar_cafe_ou_404(db, id)
+    cafe_db = buscar_cafe_ou_404(db, id, usuario)
 
     empresa = cafe.empresa.strip()
     nome_cafe = cafe.nome_cafe.strip()
 
-    validar_nome_cafe_disponivel(db, nome_cafe, id)
+    validar_nome_cafe_disponivel(
+        db, 
+        usuario.id, 
+        nome_cafe, 
+        id
+    )
 
     cafe_db.empresa = empresa
     cafe_db.nome_cafe = nome_cafe
@@ -158,8 +246,9 @@ def atualizar_cafe_parcial(
     id: int,
     cafe: CafeUpdate,
     db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
 ):
-    cafe_db = buscar_cafe_ou_404(db, id)
+    cafe_db = buscar_cafe_ou_404(db, id, usuario)
 
     dados_atualizacao = cafe.model_dump(exclude_unset=True)
 
@@ -172,6 +261,7 @@ def atualizar_cafe_parcial(
     if "nome_cafe" in dados_atualizacao:
         validar_nome_cafe_disponivel(
             db,
+            usuario,
             dados_atualizacao["nome_cafe"],
             id,
         )
@@ -199,8 +289,23 @@ def atualizar_cafe_parcial(
 
 
 @router.delete("/cafes/{id}")
-def deletar_cafe(id: int, db: Session = Depends(get_db)):
-    cafe = buscar_cafe_ou_404(db, id)
+def deletar_cafe(
+    id: int,
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
+):
+
+    cafe = buscar_cafe_ou_404(
+        db,
+        id,
+        usuario,
+    )
+
+    if not cafe:
+        raise HTTPException(
+            status_code=404,
+            detail="Café não encontrado",
+        )
 
     db.delete(cafe)
     db.commit()
@@ -214,12 +319,19 @@ def deletar_cafe(id: int, db: Session = Depends(get_db)):
 def deletar_cafe_por_nome(
     nome_cafe: str,
     db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
 ):
-    cafe = (
-        db.query(CafeDB)
-        .filter(CafeDB.nome_cafe.ilike(nome_cafe))
-        .first()
+
+    consulta = db.query(CafeDB).filter(
+        CafeDB.nome_cafe.ilike(nome_cafe)
     )
+
+    if usuario.role != "admin":
+        consulta = consulta.filter(
+            CafeDB.usuario_id == usuario.id
+        )
+
+    cafe = consulta.first()
 
     if not cafe:
         raise HTTPException(
@@ -239,14 +351,28 @@ def deletar_cafe_por_nome(
 def listar_receitas_do_cafe(
     id: int,
     db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
 ):
-    cafe = buscar_cafe_ou_404(db, id)
 
-    receitas = (
-        db.query(ReceitaDB)
-        .filter(ReceitaDB.cafe_id == id)
-        .all()
+    cafe = buscar_cafe_ou_404(
+        db,
+        id,
+        usuario,
     )
+
+    consulta = (
+        db.query(ReceitaDB)
+        .filter(
+            ReceitaDB.cafe_id == id
+        )
+    )
+
+    if usuario.role != "admin":
+        consulta = consulta.filter(
+            ReceitaDB.usuario_id == usuario.id
+        )
+
+    receitas = consulta.all()
 
     return {
         "cafe": {

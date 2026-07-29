@@ -1,5 +1,14 @@
 from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, Boolean
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    ForeignKey,
+    Date,
+    Boolean,
+    UniqueConstraint,
+)
 from datetime import date
 from pydantic import field_validator
 
@@ -12,11 +21,19 @@ class CafeDB(Base):
 
     __tablename__ = "cafes"
 
+    __table_args__ = (
+        UniqueConstraint(
+            "usuario_id",
+            "nome_cafe",
+            name="uq_usuario_nome_cafe",
+        ),
+    )
+
     id = Column(Integer, primary_key=True, index=True)
 
     empresa = Column(String(200), nullable=False)
 
-    nome_cafe = Column(String(200), nullable=False, unique=True)
+    nome_cafe = Column(String(200), nullable=False)
 
     pontuacao = Column(Float)
 
@@ -90,6 +107,8 @@ class UsuarioDB(Base):
 
     senha_hash = Column(String(255), nullable=False)
 
-    cafes = relationship("CafeDB", back_populates="usuario")
+    role = Column(String, nullable=False, default="user")
 
-    receitas = relationship("ReceitaDB", back_populates="usuario")
+    cafes = relationship("CafeDB", back_populates="usuario", cascade="all, delete-orphan")
+
+    receitas = relationship("ReceitaDB", back_populates="usuario", cascade="all, delete-orphan")

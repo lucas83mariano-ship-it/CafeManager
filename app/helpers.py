@@ -3,7 +3,7 @@ from datetime import date
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.models import CafeDB, ReceitaDB
+from app.models import CafeDB, ReceitaDB, UsuarioDB
 
 
 MEDIDAS_RECEITA_OBRIGATORIAS = (
@@ -29,6 +29,7 @@ def serializar_cafe(cafe: CafeDB):
         "processamento": cafe.processamento,
         "origem": cafe.origem,
         "link_produto": cafe.link_produto,
+        "usuario_id": cafe.usuario_id,
     }
 
 
@@ -46,6 +47,7 @@ def serializar_receita(receita: ReceitaDB):
         "avaliacao": receita.avaliacao,
         "favorita": receita.favorita,
         "comentarios": receita.comentarios,
+        "usuario_id": receita.usuario_id,
     }
 
 
@@ -62,28 +64,59 @@ def serializar_receita_do_cafe(receita: ReceitaDB):
         "avaliacao": receita.avaliacao,
         "favorita": receita.favorita,
         "comentarios": receita.comentarios,
+        "usuario_id": receita.usuario_id,
     }
 
 
-def buscar_cafe_ou_404(db: Session, cafe_id: int):
-    cafe = db.query(CafeDB).filter(CafeDB.id == cafe_id).first()
+def buscar_cafe_ou_404(
+    db: Session,
+    id: int,
+    usuario: UsuarioDB,
+):
+
+    consulta = (
+        db.query(CafeDB)
+        .filter(CafeDB.id == id)
+    )
+
+    if usuario.role != "admin":
+        consulta = consulta.filter(
+            CafeDB.usuario_id == usuario.id
+        )
+
+    cafe = consulta.first()
 
     if not cafe:
         raise HTTPException(
             status_code=404,
-            detail="Café não encontrado",
+            detail="Café não encontrado.",
         )
 
     return cafe
 
 
-def buscar_receita_ou_404(db: Session, receita_id: int):
-    receita = db.query(ReceitaDB).filter(ReceitaDB.id == receita_id).first()
+def buscar_receita_ou_404(
+    db: Session,
+    id: int,
+    usuario: UsuarioDB,
+):
+
+    consulta = (
+        db.query(ReceitaDB)
+        .filter(ReceitaDB.id == id)
+    )
+
+    if usuario.role != "admin":
+        consulta = consulta.filter(
+            ReceitaDB.usuario_id == usuario.id
+        )
+
+    receita = consulta.first()
 
     if not receita:
         raise HTTPException(
             status_code=404,
-            detail="Receita não encontrada",
+            detail="Receita não encontrada.",
         )
 
     return receita
@@ -103,10 +136,17 @@ def validar_cafe_informado(db: Session, cafe_id: int):
 
 def validar_nome_cafe_disponivel(
     db: Session,
+    usuario_id: int,
     nome_cafe: str,
     cafe_id_atual: int | None = None,
 ):
-    consulta = db.query(CafeDB).filter(CafeDB.nome_cafe.ilike(nome_cafe))
+    consulta = (
+        db.query(CafeDB)
+        .filter(
+            CafeDB.usuario_id == usuario_id,
+            CafeDB.nome_cafe.ilike(nome_cafe),
+        )
+    )
 
     if cafe_id_atual is not None:
         consulta = consulta.filter(CafeDB.id != cafe_id_atual)
@@ -233,3 +273,23 @@ def calcular_medidas_atualizacao_receita(
 
 def data_receita_ou_hoje(data_receita: date | None):
     return data_receita if data_receita else date.today()
+
+def buscar_usuario_ou_404(
+    db: Session,
+    id: int,
+):
+
+    usuario = (
+        db.query(UsuarioDB)
+        .filter(UsuarioDB.id == id)
+        .first()
+    )
+
+    if not usuario:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Usuário não encontrado.",
+        )
+
+    return usuario

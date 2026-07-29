@@ -15,3 +15,17 @@ def get_db():
         yield db
     finally:
         db.close()
+
+#from app.database import SessionLocal
+#
+#def get_db():
+#
+#    db = SessionLocal()
+#
+#    print("CRIANDO SESSION:", id(db))
+#
+#    try:
+#        yield db
+#    finally:
+#        print("FECHANDO SESSION:", id(db))
+#        db.close()

@@ -1,7 +1,7 @@
 from datetime import date
 from enum import Enum
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class MetodoCafe(str, Enum):
@@ -297,15 +297,35 @@ class Usuario(BaseModel):
     email: str
     senha: str
 
+class UsuarioResponse(BaseModel):
+
+    id: int
+    nome: str
+    email: str
+    role: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+class UsuarioUpdate(BaseModel):
+
+    nome: str
+    email: str
+
+class UsuarioUpdateParcial(BaseModel):
+
+    nome: str | None = None
+    email: str | None = None
+
+class UsuarioRoleUpdate(BaseModel):
+
+    role: str
+
 class LoginRequest(BaseModel):
 
     email: str
-
     senha: str
-
 
 class LoginResponse(BaseModel):
 
     access_token: str
-
     token_type: str = "bearer"

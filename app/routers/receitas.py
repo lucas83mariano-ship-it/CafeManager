@@ -9,9 +9,11 @@ from app.helpers import (
     data_receita_ou_hoje,
     serializar_receita,
     validar_cafe_informado,
+    buscar_cafe_ou_404
 )
-from app.models import ReceitaDB
+from app.models import ReceitaDB, UsuarioDB
 from app.schemas import Receita, ReceitaUpdate
+from app.auth import get_current_user
 
 
 router = APIRouter()
@@ -29,9 +31,18 @@ CAMPOS_OPCIONAIS_RECEITA = (
 
 
 @router.post("/receitas")
-def cadastrar_receita(receita: Receita, db: Session = Depends(get_db)):
+def cadastrar_receita(
+    receita: Receita, 
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user)
+):
     if receita.cafe_id is not None:
-        validar_cafe_informado(db, receita.cafe_id)
+
+        buscar_cafe_ou_404(
+            db,
+            receita.cafe_id,
+            usuario,
+        )
 
     proporcao, agua_ml, cafe_g = calcular_medidas_receita(
         receita.proporcao,
@@ -52,6 +63,7 @@ def cadastrar_receita(receita: Receita, db: Session = Depends(get_db)):
         avaliacao=receita.avaliacao,
         favorita=receita.favorita,
         comentarios=receita.comentarios,
+        usuario_id=usuario.id
     )
 
     db.add(nova_receita)
@@ -62,15 +74,38 @@ def cadastrar_receita(receita: Receita, db: Session = Depends(get_db)):
 
 
 @router.get("/receitas")
-def listar_receitas(db: Session = Depends(get_db)):
-    receitas = db.query(ReceitaDB).all()
+def listar_receitas(
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
+):
 
-    return [serializar_receita(receita) for receita in receitas]
+    consulta = db.query(ReceitaDB)
+
+    if usuario.role != "admin":
+        consulta = consulta.filter(
+            ReceitaDB.usuario_id == usuario.id
+        )
+
+    receitas = consulta.all()
+
+    return [
+        serializar_receita(receita)
+        for receita in receitas
+    ]
 
 
 @router.get("/receitas/{id}")
-def buscar_receita(id: int, db: Session = Depends(get_db)):
-    receita = buscar_receita_ou_404(db, id)
+def buscar_receita(
+    id: int,
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
+):
+
+    receita = buscar_receita_ou_404(
+        db,
+        id,
+        usuario,
+    )
 
     return serializar_receita(receita)
 
@@ -80,15 +115,20 @@ def atualizar_receita(
     id: int,
     receita: Receita,
     db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
 ):
-    receita_db = buscar_receita_ou_404(db, id)
+    receita_db = buscar_receita_ou_404(db, id, usuario)
     dados_atualizacao = {
         campo: getattr(receita, campo)
         for campo in receita.model_fields_set
     }
 
     if "cafe_id" in dados_atualizacao and receita.cafe_id is not None:
-        validar_cafe_informado(db, receita.cafe_id)
+        buscar_cafe_ou_404(
+            db,
+            receita.cafe_id,
+            usuario,
+        )
 
     proporcao, agua_ml, cafe_g = calcular_medidas_atualizacao_receita(
         receita_db,
@@ -120,8 +160,9 @@ def atualizar_receita_parcial(
     id: int,
     receita: ReceitaUpdate,
     db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
 ):
-    receita_db = buscar_receita_ou_404(db, id)
+    receita_db = buscar_receita_ou_404(db, id, usuario)
     dados_atualizacao = receita.model_dump(exclude_unset=True)
 
     if not dados_atualizacao:
@@ -134,7 +175,11 @@ def atualizar_receita_parcial(
         "cafe_id" in dados_atualizacao
         and dados_atualizacao["cafe_id"] is not None
     ):
-        validar_cafe_informado(db, dados_atualizacao["cafe_id"])
+        buscar_cafe_ou_404(
+            db,
+            dados_atualizacao["cafe_id"],
+            usuario,
+        )
 
     proporcao, agua_ml, cafe_g = calcular_medidas_atualizacao_receita(
         receita_db,
@@ -162,8 +207,23 @@ def atualizar_receita_parcial(
 
 
 @router.delete("/receitas/{id}")
-def deletar_receita(id: int, db: Session = Depends(get_db)):
-    receita = buscar_receita_ou_404(db, id)
+def deletar_receita(
+    id: int,
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
+):
+
+    receita = buscar_receita_ou_404(
+        db,
+        id,
+        usuario,
+    )
+
+    if not receita:
+        raise HTTPException(
+            status_code=404,
+            detail="Receita não encontrada",
+        )
 
     db.delete(receita)
     db.commit()
