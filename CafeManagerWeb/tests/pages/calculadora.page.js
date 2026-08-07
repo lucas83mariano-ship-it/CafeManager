@@ -1,3 +1,5 @@
+import { expect } from '@playwright/test';
+
 export class CalculadoraPage {
 
     constructor(page) {
@@ -99,6 +101,19 @@ export class CalculadoraPage {
 
     get mensagemErroProporcao() {
         return this.grupoProporcao.locator('.input-error');
+    }
+
+    // Validações
+    async camposVisiveisVazios() {
+        await expect(this.titulo).toBeVisible();
+        await expect(this.campoAgua).toBeVisible();
+        await expect(this.campoAgua).toBeEmpty();
+        await expect(this.campoCafe).toBeVisible();
+        await expect(this.campoCafe).toBeEmpty();
+        await expect(this.campoProporcao).toBeVisible();
+        await expect(this.campoProporcao).toBeEmpty();
+        await expect(this.botaoReiniciar).toBeVisible();
+        await expect(this.botaoCalcular).toBeDisabled();
     }
 
 }

@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { CalculadoraPage } from './pages/calculadora.page';
 import { SidebarComponent } from './components/sidebar.component';
+import { LoginPage } from './pages/login.page';
+import { CafePage } from './pages/cafes.page';
 
 test('Acessar o site Cafe Manager', async ({ page }) => { 
     // Validar o acesso ao site Café Manager, e exibição da tela inicial

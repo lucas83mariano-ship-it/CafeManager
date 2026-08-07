@@ -10,6 +10,7 @@ import Calculadora from "../pages/calculadora";
 import Receitas from "../pages/receitas";
 import CadastrarReceita from "../pages/cadastrar-receita";
 import EditarReceita from "../pages/editar-receita";
+import Perfil from "../pages/perfil";
 
 function AppRoutes() {
     return (
@@ -20,7 +21,7 @@ function AppRoutes() {
                     path="/"
                     element={
                         <MainLayout>
-                            <Dashboard />
+                            <Calculadora />
                         </MainLayout>
                     }
                 />
@@ -84,6 +85,15 @@ function AppRoutes() {
                     element={
                         <MainLayout>
                             <Calculadora />
+                        </MainLayout>
+                    }
+                />
+
+                <Route
+                    path="/perfil"
+                    element={
+                        <MainLayout>
+                            <Perfil />
                         </MainLayout>
                     }
                 />

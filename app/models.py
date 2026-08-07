@@ -59,9 +59,11 @@ class CafeDB(Base):
 
     link_produto = Column(String(300))
 
-    usuario_id = Column(Integer, ForeignKey("usuarios.id"))
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"))
 
     usuario = relationship("UsuarioDB", back_populates="cafes")
+
+    receitas = relationship("ReceitaDB", back_populates="cafe", cascade="all, delete-orphan")
 
 class ReceitaDB(Base):
 
@@ -69,7 +71,7 @@ class ReceitaDB(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    cafe_id = Column(Integer, ForeignKey("cafes.id"))
+    cafe_id = Column(Integer, ForeignKey("cafes.id", ondelete="CASCADE"))
 
     metodo = Column(String(200))
 
@@ -91,9 +93,11 @@ class ReceitaDB(Base):
     
     comentarios = Column(String(2000))
 
-    usuario_id = Column(Integer, ForeignKey("usuarios.id"))
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"))
 
     usuario = relationship("UsuarioDB", back_populates="receitas")
+
+    cafe = relationship("CafeDB", back_populates="receitas")
 
 class UsuarioDB(Base):
 

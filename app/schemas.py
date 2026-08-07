@@ -329,3 +329,13 @@ class LoginResponse(BaseModel):
 
     access_token: str
     token_type: str = "bearer"
+
+class UsuarioAlterarSenha(BaseModel):
+
+    senha_atual: str
+    nova_senha: str
+
+
+class UsuarioAdminAlterarSenha(BaseModel):
+
+    nova_senha: str

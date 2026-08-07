@@ -1,8 +1,31 @@
 import { NavLink } from "react-router-dom";
-
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/auth-context";
+import { useState } from "react";
+import LoginForm from "./LoginForm";
 import "./sidebar.css";
 
 function Sidebar() {
+
+    const [mostrarLogin, setMostrarLogin] = useState(false);
+
+    const navigate = useNavigate();
+
+    const {
+        usuario,
+        logout,
+        isAuthenticated,
+    } = useAuth();
+
+    function sair() {
+
+        logout();
+
+        setMostrarLogin(false);
+
+        navigate("/");
+
+    }
 
     return (
 
@@ -13,20 +36,22 @@ function Sidebar() {
             <nav>
 
                 <NavLink to="/">
-                    Dashboard
-                </NavLink>
-
-                <NavLink to="/cafes">
-                    Cafés
-                </NavLink>
-
-                <NavLink to="/receitas">
-                    Receitas
-                </NavLink>
-
-                <NavLink to="/calculadora">
                     Calculadora
                 </NavLink>
+
+                {isAuthenticated && (
+                    <>
+                        <NavLink to="/cafes">
+                            Cafés
+                        </NavLink>
+
+                        <NavLink to="/receitas">
+                            Receitas
+                        </NavLink>
+                    </>
+                )}
+
+                <hr />
 
             </nav>
 

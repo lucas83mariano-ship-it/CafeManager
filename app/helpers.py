@@ -1,9 +1,8 @@
 from datetime import date
-
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-
 from app.models import CafeDB, ReceitaDB, UsuarioDB
+from app.security import gerar_hash
 
 
 MEDIDAS_RECEITA_OBRIGATORIAS = (
@@ -293,3 +292,17 @@ def buscar_usuario_ou_404(
         )
 
     return usuario
+
+def alterar_senha_usuario(
+    db: Session,
+    usuario: UsuarioDB,
+    nova_senha: str,
+):
+
+    usuario.senha_hash = gerar_hash(
+        nova_senha
+    )
+
+    db.commit()
+
+    db.refresh(usuario)

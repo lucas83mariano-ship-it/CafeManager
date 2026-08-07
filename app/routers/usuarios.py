@@ -3,11 +3,11 @@ from sqlalchemy.orm import Session
 
 #from app.database import SessionLocal
 from app.models import UsuarioDB
-from app.schemas import Usuario, UsuarioUpdate, UsuarioUpdateParcial, UsuarioResponse, UsuarioRoleUpdate
-from app.security import gerar_hash
+from app.schemas import Usuario, UsuarioUpdate, UsuarioUpdateParcial, UsuarioResponse, UsuarioRoleUpdate, UsuarioAlterarSenha, UsuarioAdminAlterarSenha
+from app.security import gerar_hash, verificar_senha
 from app.dependencies import get_db
 from app.auth import get_current_user, get_current_admin
-from app.helpers import buscar_usuario_ou_404
+from app.helpers import buscar_usuario_ou_404, alterar_senha_usuario
 
 router = APIRouter(
     prefix="/usuarios",
@@ -155,6 +155,63 @@ def atualizar_usuario_parcial(
     db.refresh(usuario)
 
     return usuario
+
+@router.patch("/me/senha")
+def alterar_minha_senha(
+    dados: UsuarioAlterarSenha,
+    db: Session = Depends(get_db),
+    usuario: UsuarioDB = Depends(get_current_user),
+):
+
+    if not verificar_senha(
+        dados.senha_atual,
+        usuario.senha_hash,
+    ):
+
+        raise HTTPException(
+            status_code=400,
+            detail="Senha atual incorreta.",
+        )
+
+    alterar_senha_usuario(
+        db,
+        usuario,
+        dados.nova_senha,
+    )
+
+    return {
+        "mensagem": "Senha alterada com sucesso."
+    }
+
+@router.patch("/{id}/senha")
+def admin_alterar_senha(
+    id: int,
+    dados: UsuarioAdminAlterarSenha,
+    db: Session = Depends(get_db),
+    admin: UsuarioDB = Depends(get_current_user),
+):
+
+    if admin.role != "admin":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Acesso negado.",
+        )
+
+    usuario = buscar_usuario_ou_404(
+        db,
+        id,
+    )
+
+    alterar_senha_usuario(
+        db,
+        usuario,
+        dados.nova_senha,
+    )
+
+    return {
+        "mensagem": "Senha alterada com sucesso."
+    }
 
 @router.patch("/{id}/role")
 def alterar_role(
