@@ -1,0 +1,22 @@
+name: API Tests
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  postman-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do projeto
+        uses: actions/checkout@v4
+
+      - name: Instalar Newman
+        run: npm install -g newman
+
+      - name: Executar testes da API
+        run: |
+          newman run "postman/Projeto_Café.postman_collection.json" \
+          -e "postman/CafeManager Local.postman_environment.json"
