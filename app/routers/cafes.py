@@ -301,17 +301,37 @@ def deletar_cafe(
         usuario,
     )
 
-    if not cafe:
-        raise HTTPException(
-            status_code=404,
-            detail="Café não encontrado",
-        )
+    receitas_vinculadas = (
+        db.query(ReceitaDB)
+        .filter(ReceitaDB.cafe_id == cafe.id)
+        .count()
+    )
 
     db.delete(cafe)
+
     db.commit()
 
+    if receitas_vinculadas == 0:
+
+        mensagem = "Café removido com sucesso."
+
+    elif receitas_vinculadas == 1:
+
+        mensagem = (
+            "Café removido com sucesso. "
+            "A receita vinculada também foi removida."
+        )
+
+    else:
+
+        mensagem = (
+            "Café removido com sucesso. "
+            f"{receitas_vinculadas} receitas vinculadas "
+            "também foram removidas."
+        )
+
     return {
-        "mensagem": "Café removido com sucesso",
+        "mensagem": mensagem,
     }
 
 
@@ -327,6 +347,7 @@ def deletar_cafe_por_nome(
     )
 
     if usuario.role != "admin":
+
         consulta = consulta.filter(
             CafeDB.usuario_id == usuario.id
         )
@@ -334,16 +355,43 @@ def deletar_cafe_por_nome(
     cafe = consulta.first()
 
     if not cafe:
+
         raise HTTPException(
             status_code=404,
             detail="Café não encontrado",
         )
 
+    receitas_vinculadas = (
+        db.query(ReceitaDB)
+        .filter(ReceitaDB.cafe_id == cafe.id)
+        .count()
+    )
+
     db.delete(cafe)
+
     db.commit()
 
+    if receitas_vinculadas == 0:
+
+        mensagem = "Café removido com sucesso."
+
+    elif receitas_vinculadas == 1:
+
+        mensagem = (
+            "Café removido com sucesso. "
+            "A receita vinculada também foi removida."
+        )
+
+    else:
+
+        mensagem = (
+            "Café removido com sucesso. "
+            f"{receitas_vinculadas} receitas vinculadas "
+            "também foram removidas."
+        )
+
     return {
-        "mensagem": "Café removido com sucesso",
+        "mensagem": mensagem,
     }
 
 

@@ -53,6 +53,8 @@ function CafeRow({
 
         <tr>
 
+            <td>{cafe.usuario_id}</td>
+            
             <td>{cafe.id}</td>
 
             <td>{cafe.empresa}</td>

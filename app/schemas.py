@@ -1,7 +1,7 @@
 from datetime import date
 from enum import Enum
 
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, Field, field_validator, ConfigDict, EmailStr
 
 
 class MetodoCafe(str, Enum):
@@ -294,8 +294,26 @@ class ReceitaUpdate(BaseModel):
 class Usuario(BaseModel):
 
     nome: str
-    email: str
+    email: EmailStr
     senha: str
+
+    @field_validator("nome")
+    @classmethod
+    def validar_texto(cls, valor):
+        valor = valor.strip()
+
+        if not valor:
+            raise ValueError("O campo não pode ser vazio.")
+
+        return valor
+
+    @field_validator("senha")
+    @classmethod
+    def validar_senha(cls, valor):
+        if not valor.strip():
+            raise ValueError("A senha não pode ser vazia.")
+
+        return valor
 
 class UsuarioResponse(BaseModel):
 
@@ -309,16 +327,51 @@ class UsuarioResponse(BaseModel):
 class UsuarioUpdate(BaseModel):
 
     nome: str
-    email: str
+    email: EmailStr
+
+    @field_validator("nome")
+    @classmethod
+    def validar_texto(cls, valor):
+        valor = valor.strip()
+
+        if not valor:
+            raise ValueError("O campo não pode ser vazio.")
+
+        return valor
 
 class UsuarioUpdateParcial(BaseModel):
 
     nome: str | None = None
-    email: str | None = None
+    email: EmailStr | None = None
+
+    @field_validator("nome")
+    @classmethod
+    def validar_texto(cls, valor):
+        if valor is None:
+            return None
+
+        valor = valor.strip()
+
+        if not valor:
+            raise ValueError("O campo não pode ser vazio.")
+
+        return valor
 
 class UsuarioRoleUpdate(BaseModel):
 
     role: str
+
+    @field_validator("role")
+    @classmethod
+    def validar_role(cls, valor):
+        valor = valor.strip()
+
+        if valor not in ("user", "admin"):
+            raise ValueError(
+                "A role deve ser 'user' ou 'admin'."
+            )
+
+        return valor
 
 class LoginRequest(BaseModel):
 
@@ -335,7 +388,23 @@ class UsuarioAlterarSenha(BaseModel):
     senha_atual: str
     nova_senha: str
 
+    @field_validator("senha_atual", "nova_senha")
+    @classmethod
+    def validar_senha(cls, valor):
+        if not valor.strip():
+            raise ValueError("A senha não pode ser vazia.")
+
+        return valor
+
 
 class UsuarioAdminAlterarSenha(BaseModel):
 
     nova_senha: str
+
+    @field_validator("nova_senha")
+    @classmethod
+    def validar_senha(cls, valor):
+        if not valor.strip():
+            raise ValueError("A senha não pode ser vazia.")
+
+        return valor

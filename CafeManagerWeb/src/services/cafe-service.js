@@ -37,3 +37,26 @@ export async function deletarCafe(id) {
     await api.delete(`/cafes/${id}`);
 
 }
+
+export const cafeService = {
+    async createCafe(data) {
+        try {
+            const response = await fetch('/api/cafes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao criar café.');
+            }
+
+            return await response.json();
+        } catch (erro) {
+            console.error(erro);
+            throw erro;
+        }
+    },
+
+    // Outros métodos como update, delete poderão vir depois.
+};

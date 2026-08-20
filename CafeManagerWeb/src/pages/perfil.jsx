@@ -81,11 +81,56 @@ export default function Perfil() {
         
         }
         catch (erro) {
-        
-            alert(
-                erro.response?.data?.detail ||
-                "Não foi possível realizar o cadastro."
-            );
+
+            const detalhe = erro.response?.data?.detail;
+                
+            if (Array.isArray(detalhe)) {
+            
+                const mensagens = detalhe.map((item) => {
+                
+                    if (item.loc?.includes("nome")) {
+                    
+                        return "Informe o nome de usuário.";
+                    
+                    }
+                
+                    if (item.loc?.includes("email")) {
+                    
+                        if (
+                            item.type === "value_error" ||
+                            item.type === "string_pattern_mismatch" ||
+                            item.msg?.toLowerCase().includes("valid email") ||
+                            item.msg?.toLowerCase().includes("email")
+                        ) {
+                        
+                            return "Informe um e-mail válido.";
+                        
+                        }
+                    
+                        return "Informe o e-mail.";
+                    
+                    }
+                
+                    if (item.loc?.includes("senha")) {
+                    
+                        return "Informe a senha.";
+                    
+                    }
+                
+                    return item.msg || "Dados inválidos.";
+                
+                });
+            
+                alert(mensagens.join("\n"));
+            
+            } else {
+            
+                alert(
+                    detalhe ||
+                    "Não foi possível realizar o cadastro."
+                );
+            
+            }
         
             setCarregando(false);
         

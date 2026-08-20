@@ -104,7 +104,7 @@ export class CalculadoraPage {
     }
 
     // Validações
-    async camposVisiveisVazios() {
+    async calculadoraInicial() {
         await expect(this.titulo).toBeVisible();
         await expect(this.campoAgua).toBeVisible();
         await expect(this.campoAgua).toBeEmpty();

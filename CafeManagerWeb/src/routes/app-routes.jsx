@@ -1,8 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 import MainLayout from "../layouts/main-layout";
-
-import Dashboard from "../pages/dashboard";
+import Usuarios from "../pages/usuarios";
 import Cafes from "../pages/cafes";
 import CadastrarCafe from "../pages/cadastrar-cafe";
 import EditarCafe from "../pages/editar-cafe";
@@ -11,6 +9,7 @@ import Receitas from "../pages/receitas";
 import CadastrarReceita from "../pages/cadastrar-receita";
 import EditarReceita from "../pages/editar-receita";
 import Perfil from "../pages/perfil";
+import AdminRoute from "../components/admin-route";
 
 function AppRoutes() {
     return (
@@ -95,6 +94,17 @@ function AppRoutes() {
                         <MainLayout>
                             <Perfil />
                         </MainLayout>
+                    }
+                />
+
+                <Route
+                    path="/usuarios"
+                    element={
+                        <AdminRoute>
+                            <MainLayout>
+                                <Usuarios />
+                            </MainLayout>
+                        </AdminRoute>
                     }
                 />
 

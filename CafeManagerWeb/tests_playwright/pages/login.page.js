@@ -1,10 +1,11 @@
-import { expect } from '@playwright/test';
+import { expect, request } from '@playwright/test';
 import { HeaderComponent } from '../components/header.component';
 
 export class LoginPage {
 
     constructor(page) {
         this.page = page;
+        this.request = request;
         this.headerComponent = new HeaderComponent(page);
     }
 
@@ -63,6 +64,12 @@ export class LoginPage {
         await this.fazerLogin();
     }
 
+    async loginLucas() {
+        await this.campoEmail.fill('lucas83mariano@gmail.com');
+        await this.campoSenha.fill('Admin1*');
+        await this.fazerLogin();
+    }
+
     async fazerLogout() {
         await this.botaoSair.click();
     }
@@ -70,6 +77,26 @@ export class LoginPage {
     async acaoCompletaLogout(){
         await this.headerComponent.irParaPerfil();
         await this.fazerLogout();
+    }
+
+    // Capturar quantidade de cafés dependendo do usuário logado
+    async qtdeCafesAdmin(){
+        const loginAdmin = await request.post('/login', {
+            data: {
+                email: 'admin@admin.com',
+                senha: 'AdminUsu123*'
+            }
+        });
+        const dadosLogin = await loginAdmin.json();
+        const resposta = await request.get('/cafes', {
+            headers: {Authorization: `Bearer ${dadosLogin.access_token}`}
+        });
+        const cafesApi= await resposta.json();
+
+        
+        await expect(tabela).toHaveCount(cafesApi.length);
+
+        console.log(cafesApi);
     }
 
 }

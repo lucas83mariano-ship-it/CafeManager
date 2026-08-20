@@ -4,6 +4,7 @@ import CafesTable from "../components/cafes-table";
 import useCafes from "../hooks/use-cafes";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/button";
+import { cadastrarCafe } from "../services/cafe-service";
 import "../styles/cafes.css";
 
 function Cafes() {

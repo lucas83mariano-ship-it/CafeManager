@@ -105,6 +105,44 @@ def atualizar_usuario(
 
     return usuario
 
+@router.put("/{id}")
+def atualizar_usuario_por_id(
+    id: int,
+    dados: UsuarioUpdate,
+    db: Session = Depends(get_db),
+    _admin: UsuarioDB = Depends(get_current_admin),
+):
+
+    usuario = buscar_usuario_ou_404(
+        db,
+        id,
+    )
+
+    usuario_existente = (
+        db.query(UsuarioDB)
+        .filter(
+            UsuarioDB.email == dados.email,
+            UsuarioDB.id != usuario.id,
+        )
+        .first()
+    )
+
+    if usuario_existente:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Já existe um usuário com este e-mail.",
+        )
+
+    usuario.nome = dados.nome.strip()
+    usuario.email = str(dados.email)
+
+    db.commit()
+
+    db.refresh(usuario)
+
+    return usuario
+
 @router.patch(
     "/me",
     response_model=UsuarioResponse,
@@ -149,6 +187,49 @@ def atualizar_usuario_parcial(
     if "nome" in atualizacao:
 
         usuario.nome = atualizacao["nome"].strip()
+
+    db.commit()
+
+    db.refresh(usuario)
+
+    return usuario
+
+@router.patch("/{id}")
+def atualizar_usuario_parcial_por_id(
+    id: int,
+    dados: UsuarioUpdateParcial,
+    db: Session = Depends(get_db),
+    _admin: UsuarioDB = Depends(get_current_admin),
+):
+
+    usuario = buscar_usuario_ou_404(
+        db,
+        id,
+    )
+
+    if dados.email is not None:
+
+        usuario_existente = (
+            db.query(UsuarioDB)
+            .filter(
+                UsuarioDB.email == dados.email,
+                UsuarioDB.id != usuario.id,
+            )
+            .first()
+        )
+
+        if usuario_existente:
+
+            raise HTTPException(
+                status_code=400,
+                detail="Já existe um usuário com este e-mail.",
+            )
+
+        usuario.email = str(dados.email)
+
+    if dados.nome is not None:
+
+        usuario.nome = dados.nome.strip()
 
     db.commit()
 

@@ -13,6 +13,7 @@ function CafesTable({
 
                 <tr>
 
+                    <th>Autor</th>
                     <th>ID</th>
                     <th>Empresa</th>
                     <th>Nome</th>

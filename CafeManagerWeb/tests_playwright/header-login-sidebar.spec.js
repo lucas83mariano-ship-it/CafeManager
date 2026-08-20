@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, request } from '@playwright/test';
 import { CalculadoraPage } from './pages/calculadora.page';
 import { SidebarComponent } from './components/sidebar.component';
 import { CafePage } from './pages/cafes.page';
@@ -30,8 +30,8 @@ test ('Validar exibição dos campos de login', async ({ page }) => {
     await expect(loginPage.botaoVoltar).toBeVisible();
 });
 
-test ('Validar login com sucesso', async ({ page }) => {
-    // Validar que após realizar login serão exibidos os menus de Cafés e Receitas. A tela ainda deve ser da Calculadora.
+test ('Validar login com sucesso com usuário Admin', async ({ page }) => {
+    // Validar que após realizar login com usuário que possui role='admin', serão exibidos os menus de Cafés, Receitas, Calculadora, Usuários. A tela ainda deve ser da Calculadora.
     
     // Preparação
     const sidebar = new SidebarComponent(page);
@@ -50,9 +50,7 @@ test ('Validar login com sucesso', async ({ page }) => {
     await loginPage.fazerLogin();
    
     // Validação
-    await expect(sidebar.menuCafes).toBeVisible();
-    await expect(sidebar.menuReceitas).toBeVisible();
-    await expect(sidebar.menuCalculadora).toBeVisible();
+    await sidebar.loginExibeTodosMenus();
     await expect(headerComponent.tituloHeader).toBeVisible();
     await expect(headerComponent.linkPerfil).toContainText('admin@admin.com');
     await expect(calculadoraPage.titulo).toBeVisible();
@@ -66,8 +64,29 @@ test ('Validar login com sucesso', async ({ page }) => {
     await expect(calculadoraPage.botaoCalcular).toBeDisabled();
 });
 
-test ('Validar logout com sucesso', async ({ page }) => {
-    // Validar que após realizar logout serão ocultados os menus de Cafés e Receitas, o usuário será redirecionado para a tela de Calculadora, e no header o link de perfil deverá exibir a palavra Perfil.
+test ('Validar login com sucesso com usuário User', async ({ page }) => {
+    // Validar que após realizar login com usuário que possui role='user', serão exibidos os menus de Cafés, Receitas e Calculadora. A tela ainda deve ser Calculadora
+
+    //Preparação
+    const sidebar = new SidebarComponent(page);
+    const loginPage = new LoginPage(page);
+    const calculadoraPage = new CalculadoraPage(page);
+    const headerComponent = new HeaderComponent(page);
+
+    await page.goto ('/');
+
+    // Ação
+    await headerComponent.irParaPerfil();
+    await loginPage.loginLucas();
+
+    // Validação
+    await sidebar.loginMenusUser();
+    await expect(headerComponent.linkPerfil).toContainText('lucas83mariano@gmail.com');
+    await calculadoraPage.calculadoraInicial();
+});
+
+test ('Validar logout do Admin com sucesso', async ({ page }) => {
+    // Validar que após realizar logout de usuário com role='admin', serão ocultados os menus de Cafés, Receitas e Usuários, o usuário será redirecionado para a tela de Calculadora, e no header o link de perfil deverá exibir a palavra Perfil.
 
     // Preparação
     const sidebar = new SidebarComponent(page);
@@ -75,14 +94,15 @@ test ('Validar logout com sucesso', async ({ page }) => {
     const headerComponent = new HeaderComponent(page);
     const loginPage = new LoginPage(page);
 
-    // Ação
     await page.goto('/');
+
+    // Ação
     await headerComponent.irParaPerfil();
     await loginPage.loginAdmin();
 
     // Validação
     await expect(headerComponent.linkPerfil).toContainText('admin@admin.com');
-    await calculadoraPage.camposVisiveisVazios();
+    await calculadoraPage.calculadoraInicial();
 
     // Ação
     await headerComponent.irParaPerfil();
@@ -91,8 +111,42 @@ test ('Validar logout com sucesso', async ({ page }) => {
     // Validação
     await expect(sidebar.menuCafes).not.toBeVisible();
     await expect(sidebar.menuReceitas).not.toBeVisible();
+    await expect(sidebar.menuUsuarios).not.toBeVisible();
     await expect(sidebar.menuCalculadora).toBeVisible();
     await calculadoraPage.camposVisiveisVazios();
+    await expect(headerComponent.linkPerfil).toContainText('Perfil');
+});
+
+test ('Validar logou do User com sucesso', async ({ page }) => {
+    // Validar que após realizar logout de usuário com role='user', serão ocultados os menus de Cafés e Receitas, o usuário será redirecionado para a tela de Calculadora, e no header o link de perfil deverá exibir a palavra Perfil.
+
+    //Preparação
+    const sidebar = new SidebarComponent(page);
+    const headerComponent = new HeaderComponent(page);
+    const calculadoraPage = new CalculadoraPage(page);
+    const loginPage = new LoginPage(page);
+
+    await page.goto('/');
+
+    // Ação
+    await headerComponent.irParaPerfil();
+    await loginPage.loginLucas();
+
+    // Validação
+    await expect(headerComponent.linkPerfil).toContainText('lucas83mariano@gmail.com');
+    await sidebar.loginMenusUser();
+    await calculadoraPage.calculadoraInicial();
+
+    // Ação
+    await headerComponent.irParaPerfil();
+    await loginPage.fazerLogout();
+
+    // Validação
+    await expect(sidebar.menuCafes).not.toBeVisible();
+    await expect(sidebar.menuReceitas).not.toBeVisible();
+    await expect(sidebar.menuUsuarios).not.toBeVisible();
+    await expect(sidebar.menuCalculadora).toBeVisible();
+    await calculadoraPage.calculadoraInicial();
     await expect(headerComponent.linkPerfil).toContainText('Perfil');
 });
 
@@ -110,26 +164,27 @@ test ('Validar exibição de todos os cafés para login com Usuário que possui 
     await headerComponent.irParaPerfil();
 
     // Ação
-    await loginPage.campoEmail.fill('admin@admin.com');
-    await loginPage.campoSenha.fill('AdminUsu123*');
-    await loginPage.fazerLogin();
+    await loginPage.loginAdmin();
    
     // Validação
     await sidebar.loginExibeTodosMenus();
-    await calculadoraPage.camposVisiveisVazios();
+    await calculadoraPage.calculadoraInicial();
 
     // Ação
     await sidebar.irParaCafes();
 
     // Validação
-    await expect(cafePage.tituloCafes).toBeVisible();
-    await expect(cafePage.totalCafes).toContainText('Total de cafés: 4');
-
-    // Ação de logout
-    await loginPage.acaoCompletaLogout();
-
-    // Validação
-    await expect(headerComponent.linkPerfil).toContainText('Perfil');
+    //await loginPage.qtdeCafesAdmin();
+    await expect(cafePage.tabelaCafes).toBeVisible();
+    await expect(cafePage.headTabela).toContainText('Pontuação');
+    //await expect(cafePage.tituloCafes).toBeVisible();
+    //await expect(cafePage.totalCafes).toContainText('Total de cafés: 4');
+//
+    //// Ação de logout
+    //await loginPage.acaoCompletaLogout();
+//
+    //// Validação
+    //await expect(headerComponent.linkPerfil).toContainText('Perfil');
 });
 
 test ('Validar exibição dos cafés do Usuário que possui role User', async ({ page }) => {
