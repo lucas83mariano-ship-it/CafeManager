@@ -40,6 +40,10 @@ jobs:
         run: |
           echo "DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/cafemanager" > .env
 
+      - name: Criar tabelas do banco
+        run: |
+          python -c "from app.database import engine; from app.models import Base; Base.metadata.create_all(bind=engine)"
+
       - name: Criar usuário Admin
         run: python criar_admin.py
 
