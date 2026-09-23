@@ -1,5 +1,20 @@
 # CafeManager
 
+## Índice
+
+- [Sobre o projeto](#sobre-o-projeto)
+- [Tecnologias utilizadas](#tecnologias-utilizadas)
+- [Pré-requisitos](#pré-requisitos)
+- [Configuração do ambiente](#configuração-do-ambiente)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Como executar a API](#como-executar-a-api)
+- [Como executar o Frontend](#como-executar-o-frontend)
+- [Como executar os testes automatizados](#como-executar-os-testes-automatizados)
+- [Estratégia de testes](#estratégia-de-testes)
+- [Pipeline CI/CD](#pipeline-cicd)
+- [Git e fluxo de desenvolvimento](#git-e-fluxo-de-desenvolvimento)
+- [Status do projeto](#status-do-projeto)
+
 ## Sobre o projeto
 
 O **CafeManager** é uma aplicação web desenvolvida com o objetivo de permitir o cadastro e gerenciamento de **cafés especiais**, **receitas de preparo** e o cálculo automático da proporção entre água e café.
@@ -42,6 +57,9 @@ O sistema possui as seguintes áreas principais:
 * **Perfil:** permite consultar e alterar os dados da própria conta.
 * **Autenticação:** controla o acesso às funcionalidades protegidas da aplicação.
 * **Swagger:** disponibiliza a documentação interativa da API e permite explorar seus endpoints diretamente.
+
+<details>
+   <summary><strong><code>📌 Regras de negócio e possibilidades de teste</code></strong></summary>
 
 ### Regras de negócio e possibilidades de teste
 
@@ -219,6 +237,8 @@ Um administrador pode visualizar e gerenciar receitas de qualquer usuário.
 
 #### Calculadora de café
 
+A aplicação possui uma calculadora para auxiliar na definição da proporção entre água e café, permitindo calcular automaticamente um dos valores a partir dos outros dois.
+
 A calculadora possui três campos:
 
 * Água (ml)
@@ -250,6 +270,25 @@ Quando exatamente dois campos válidos são preenchidos, o campo restante recebe
 Após o cálculo, caso o usuário altere um dos valores utilizados no cálculo, o resultado calculado anteriormente é removido e precisa ser recalculado.
 
 A opção **Reiniciar** limpa os valores e retorna a calculadora ao estado inicial.
+
+#### Conteúdo complementar
+
+A tela da calculadora também disponibiliza conteúdos relacionados ao universo
+do café, com o objetivo de complementar a experiência do usuário.
+
+Atualmente, essa área contempla:
+
+- **Dicas sobre café:** espaço destinado à apresentação de dicas e conteúdos
+  relacionados ao preparo e consumo de café. A área foi planejada para receber
+  futuramente um carrossel com dicas e imagens.
+- **Vídeo complementar:** vídeo incorporado do YouTube com conteúdo sobre
+  diferentes tipos de café.
+
+Os conteúdos complementares também fazem parte da interface e, portanto,
+podem ser considerados nos testes de navegação, apresentação e comportamento
+da tela.
+
+> **Conteúdo externo:** o vídeo é hospedado e disponibilizado pelo YouTube e incorporado à aplicação como material complementar.
 
 #### Perfil e gerenciamento da conta
 
@@ -395,6 +434,8 @@ Os testes procuram validar não apenas se uma funcionalidade funciona em seu flu
 * comportamento da aplicação após alterações nos dados.
 
 Dessa forma, o CafeManager funciona simultaneamente como uma aplicação de estudo e como um ambiente prático para aplicação de conceitos de Quality Assurance.
+
+</details>
 
 ## Tecnologias utilizadas
 
@@ -1211,9 +1252,193 @@ Por isso, informações como endereço do banco, credenciais, portas e variávei
 
 ## Estrutura do projeto
 
+O projeto está organizado em diferentes áreas, separando a API, o frontend, os testes e os arquivos relacionados à execução e documentação.
+
+```text
+CafeManager/
+├── app/                         # Backend / API FastAPI
+│   ├── routers/                 # Rotas e endpoints da API
+│   └── ...
+│
+├── CafeManagerWeb/              # Frontend React
+│   ├── public/                  # Arquivos públicos
+│   ├── src/                     # Código da aplicação
+│   ├── tests_playwright/        # Testes automatizados com Playwright
+│   └── ...
+│
+├── postman/                     # Collection e environment dos testes de API
+├── newman/                      # Arquivos relacionados à execução dos testes com Newman
+├── tests/                       # Testes adicionais do projeto
+├── tests_robot/                 # Estudos/testes utilizando Robot Framework
+├── docs/                        # Documentação complementar
+├── drivers/                     # Arquivos relacionados aos drivers utilizados
+├── data/                        # Dados utilizados pelo projeto
+│
+├── .github/
+│   └── workflows/               # Workflows de CI/CD do GitHub Actions
+│
+├── criar_admin.py               # Criação/configuração do usuário administrador
+├── requirements.txt             # Dependências do backend Python
+└── README.md                    # Documentação principal do projeto
+```
+
+Algumas pastas presentes no ambiente local não são consideradas parte da estrutura funcional do projeto e não são apresentadas acima, como `.venv`, `node_modules`, `__pycache__`, relatórios de execução e arquivos temporários gerados pelos testes.
+
+### Backend
+
+O backend foi desenvolvido utilizando **Python e FastAPI**.
+
+A pasta `app/` concentra a implementação da API, incluindo os modelos, schemas, serviços e routers responsáveis pelas funcionalidades do sistema.
+
+A API utiliza **PostgreSQL** para persistência dos dados.
+
+### Frontend
+
+O frontend está localizado em `CafeManagerWeb/` e foi desenvolvido utilizando **React** com **Vite**.
+
+A pasta `src/` contém o código da aplicação, enquanto `tests_playwright/` concentra os testes automatizados de interface e fluxo utilizando Playwright.
+
+### Testes
+
+O projeto possui diferentes abordagens de teste:
+
+* **Playwright:** testes automatizados do frontend e dos fluxos da aplicação;
+* **Postman/Newman:** testes automatizados da API;
+* **Robot Framework:** estudos e testes desenvolvidos durante a evolução do projeto.
+
+---
+
 ## Como executar a API
 
+### Pré-requisitos
+
+Antes de iniciar a API, é necessário ter:
+
+* Python instalado;
+* PostgreSQL em execução;
+* banco de dados configurado para o CafeManager;
+* dependências Python instaladas.
+
+As dependências do backend estão especificadas no arquivo `requirements.txt`.
+
+Para instalar:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Banco de dados
+
+A aplicação utiliza PostgreSQL para armazenamento dos dados.
+
+A conexão com o banco é configurada por meio da variável `DATABASE_URL`.
+
+Exemplo:
+
+```env
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/cafemanager
+```
+
+Após configurar o banco e o ambiente da aplicação, as tabelas podem ser criadas utilizando:
+
+```bash
+python -c "from app.database import engine; from app.models import Base; Base.metadata.create_all(bind=engine)"
+```
+
+O usuário administrador inicial pode ser criado utilizando:
+
+```bash
+python criar_admin.py
+```
+
+### Iniciando a API
+
+A partir da raiz do projeto:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+Com a API em execução, ela estará disponível na porta `8000`.
+
+A documentação interativa do Swagger pode ser acessada em:
+
+```text
+http://localhost:8000/docs
+```
+
+A raiz da API também pode ser utilizada para verificar se o serviço está em execução:
+
+```text
+http://localhost:8000/
+```
+
+---
+
 ## Como executar o Frontend
+
+O frontend está localizado na pasta `CafeManagerWeb`.
+
+Entre na pasta:
+
+```bash
+cd CafeManagerWeb
+```
+
+Instale as dependências do projeto:
+
+```bash
+npm install
+```
+
+### Iniciando o frontend
+
+Execute:
+
+```bash
+npm run dev -- --host
+```
+
+O Vite disponibilizará a aplicação para acesso local e também para outros dispositivos da rede, de acordo com a configuração do ambiente.
+
+Por padrão, o Vite utiliza a porta `5173`.
+
+Assim, em uma execução local, o frontend normalmente estará disponível em:
+
+```text
+http://localhost:5173
+```
+
+### API e Frontend
+
+Para utilizar a aplicação completa, o backend e o frontend devem estar em execução simultaneamente.
+
+Em um ambiente local, a arquitetura básica é:
+
+```text
+┌──────────────────────┐
+│      Frontend        │
+│   React + Vite       │
+│   localhost:5173     │
+└──────────┬───────────┘
+           │
+           │ HTTP / API
+           ▼
+┌──────────────────────┐
+│       Backend        │
+│      FastAPI         │
+│   localhost:8000     │
+└──────────┬───────────┘
+           │
+           │ SQL
+           ▼
+┌──────────────────────┐
+│      PostgreSQL      │
+│       :5432          │
+└──────────────────────┘
+```
+
+O frontend utiliza a API para autenticação, consulta e alteração dos dados de usuários, cafés e receitas.
 
 ## Como executar os testes automatizados
 

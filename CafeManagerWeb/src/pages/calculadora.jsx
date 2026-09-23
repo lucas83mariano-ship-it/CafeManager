@@ -453,6 +453,24 @@ function Calculadora() {
                 
             </div>
 
+            <div className="calculadora-video">
+
+                <br></br><br></br>
+                <h2>Aprenda mais sobre café</h2>
+                <p>Conteúdo complementar em vídeo, disponibilizado pelo YouTube.</p>
+
+                <div className="video-container">
+                    <iframe
+                        src="https://www.youtube.com/embed/CIDc8LgdLL8"
+                        title="Vídeo sobre café"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                    ></iframe>
+                </div>
+
+            </div>
+
         </>
 
     );

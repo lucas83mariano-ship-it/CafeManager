@@ -4,7 +4,10 @@ import { SidebarComponent } from './components/sidebar.component';
 import { CafePage } from './pages/cafes.page';
 import { HeaderComponent } from './components/header.component';
 import { LoginPage } from './pages/login.page';
+import { PerfilComponent } from './components/perfil.component';
+import { PerfilPage } from './pages/perfil.page';
 import { log } from 'node:console';
+import { UsuariosPage } from './pages/usuarios.page';
 
 test ('Validar exibição dos campos de login', async ({ page }) => {
     // Validar a exibição dos campos de login (e-mail, senha, entrar) após clicar em Entrar
@@ -12,6 +15,7 @@ test ('Validar exibição dos campos de login', async ({ page }) => {
     // Preparação
     const headerComponent = new HeaderComponent(page);
     const loginPage = new LoginPage(page);
+    const perfilComponent = new PerfilComponent(page);
 
     await page.goto('/');
     await expect(headerComponent.tituloHeader).toBeVisible();
@@ -26,8 +30,8 @@ test ('Validar exibição dos campos de login', async ({ page }) => {
     await expect(loginPage.campoEmail).toBeVisible();
     await expect(loginPage.campoSenha).toBeVisible();
     await expect(loginPage.botaoEntrar).toBeVisible();
-    await expect(loginPage.botaoCriarConta).toBeVisible();
-    await expect(loginPage.botaoVoltar).toBeVisible();
+    await expect(perfilComponent.botaoCriarConta).toBeVisible();
+    await expect(perfilComponent.botaoVoltar).toBeVisible();
 });
 
 test ('Validar login com sucesso com usuário Admin', async ({ page }) => {
@@ -38,6 +42,9 @@ test ('Validar login com sucesso com usuário Admin', async ({ page }) => {
     const calculadoraPage = new CalculadoraPage(page);
     const headerComponent = new HeaderComponent(page);
     const loginPage = new LoginPage(page);
+    const perfilComponent = new PerfilComponent(page);
+    const perfilPage = new PerfilPage(page);
+    const usuario = loginPage.listaUsuarios.filter(usuario => usuario.nome === 'Admin');
 
     await page.goto('/');
     await expect(headerComponent.tituloHeader).toBeVisible();
@@ -45,23 +52,15 @@ test ('Validar login com sucesso com usuário Admin', async ({ page }) => {
 
     // Ação
     await headerComponent.irParaPerfil();
-    await loginPage.campoEmail.fill('admin@admin.com');
-    await loginPage.campoSenha.fill('AdminUsu123*');
-    await loginPage.fazerLogin();
+    await loginPage.login2(usuario[0]);
    
     // Validação
     await sidebar.loginExibeTodosMenus();
     await expect(headerComponent.tituloHeader).toBeVisible();
-    await expect(headerComponent.linkPerfil).toContainText('admin@admin.com');
-    await expect(calculadoraPage.titulo).toBeVisible();
-    await expect(calculadoraPage.campoAgua).toBeVisible();
-    await expect(calculadoraPage.campoAgua).toBeEmpty();
-    await expect(calculadoraPage.campoCafe).toBeVisible();
-    await expect(calculadoraPage.campoCafe).toBeEmpty();
-    await expect(calculadoraPage.campoProporcao).toBeVisible();
-    await expect(calculadoraPage.campoProporcao).toBeEmpty();
-    await expect(calculadoraPage.botaoReiniciar).toBeVisible();
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
+    await expect(headerComponent.linkPerfil).toContainText(usuario[0].email);
+    await calculadoraPage.calculadoraInicial();
+    await headerComponent.irParaPerfil();
+    await expect(perfilPage.dadosPerfil).toContainText('Administrador');
 });
 
 test ('Validar login com sucesso com usuário User', async ({ page }) => {
@@ -72,17 +71,22 @@ test ('Validar login com sucesso com usuário User', async ({ page }) => {
     const loginPage = new LoginPage(page);
     const calculadoraPage = new CalculadoraPage(page);
     const headerComponent = new HeaderComponent(page);
+    const perfilComponent = new PerfilComponent(page);
+    const perfilPage = new PerfilPage(page);
+    const usuario = loginPage.listaUsuarios.filter(usuario => usuario.nome === 'Mônica');
 
     await page.goto ('/');
 
     // Ação
     await headerComponent.irParaPerfil();
-    await loginPage.loginLucas();
+    await loginPage.login2(usuario[0]);
 
     // Validação
     await sidebar.loginMenusUser();
-    await expect(headerComponent.linkPerfil).toContainText('lucas83mariano@gmail.com');
+    await expect(headerComponent.linkPerfil).toContainText(usuario[0].email);
     await calculadoraPage.calculadoraInicial();
+    await headerComponent.irParaPerfil();
+    await expect(perfilPage.dadosPerfil).toContainText('Amante de Café');
 });
 
 test ('Validar logout do Admin com sucesso', async ({ page }) => {
@@ -93,31 +97,29 @@ test ('Validar logout do Admin com sucesso', async ({ page }) => {
     const calculadoraPage = new CalculadoraPage(page);
     const headerComponent = new HeaderComponent(page);
     const loginPage = new LoginPage(page);
+    const perfilPage = new PerfilPage(page);
+    const usuario = loginPage.listaUsuarios.filter(usuario => usuario.nome === 'Admin');
 
     await page.goto('/');
 
     // Ação
     await headerComponent.irParaPerfil();
-    await loginPage.loginAdmin();
+    await loginPage.login(usuario[0]);
 
     // Validação
-    await expect(headerComponent.linkPerfil).toContainText('admin@admin.com');
+    await expect(headerComponent.linkPerfil).toContainText(usuario[0].email);
     await calculadoraPage.calculadoraInicial();
 
     // Ação
-    await headerComponent.irParaPerfil();
-    await loginPage.fazerLogout();
+    await loginPage.acaoCompletaLogout();
 
     // Validação
-    await expect(sidebar.menuCafes).not.toBeVisible();
-    await expect(sidebar.menuReceitas).not.toBeVisible();
-    await expect(sidebar.menuUsuarios).not.toBeVisible();
-    await expect(sidebar.menuCalculadora).toBeVisible();
-    await calculadoraPage.camposVisiveisVazios();
+    await sidebar.sidebarInicial();
+    await calculadoraPage.calculadoraInicial();
     await expect(headerComponent.linkPerfil).toContainText('Perfil');
 });
 
-test ('Validar logou do User com sucesso', async ({ page }) => {
+test ('Validar logout do User com sucesso', async ({ page }) => {
     // Validar que após realizar logout de usuário com role='user', serão ocultados os menus de Cafés e Receitas, o usuário será redirecionado para a tela de Calculadora, e no header o link de perfil deverá exibir a palavra Perfil.
 
     //Preparação
@@ -125,102 +127,54 @@ test ('Validar logou do User com sucesso', async ({ page }) => {
     const headerComponent = new HeaderComponent(page);
     const calculadoraPage = new CalculadoraPage(page);
     const loginPage = new LoginPage(page);
+    const perfilPage = new PerfilPage(page);
 
     await page.goto('/');
 
     // Ação
     await headerComponent.irParaPerfil();
-    await loginPage.loginLucas();
+    await loginPage.login2('monicamendonca66@gmail.com');
 
     // Validação
-    await expect(headerComponent.linkPerfil).toContainText('lucas83mariano@gmail.com');
+    await expect(headerComponent.linkPerfil).toContainText('monicamendonca66@gmail.com');
     await sidebar.loginMenusUser();
     await calculadoraPage.calculadoraInicial();
 
     // Ação
-    await headerComponent.irParaPerfil();
-    await loginPage.fazerLogout();
-
-    // Validação
-    await expect(sidebar.menuCafes).not.toBeVisible();
-    await expect(sidebar.menuReceitas).not.toBeVisible();
-    await expect(sidebar.menuUsuarios).not.toBeVisible();
-    await expect(sidebar.menuCalculadora).toBeVisible();
-    await calculadoraPage.calculadoraInicial();
-    await expect(headerComponent.linkPerfil).toContainText('Perfil');
-});
-
-test ('Validar exibição de todos os cafés para login com Usuário que possui role Admin', async ({ page }) => {
-    // Validar o acesso ao menu Cafés e a exibição de todos os cafés cadastrados para um usuário com role Admin.
-    
-    // Preparação
-    const sidebar = new SidebarComponent(page);
-    const calculadoraPage = new CalculadoraPage(page);
-    const cafePage = new CafePage(page);
-    const headerComponent = new HeaderComponent(page);
-    const loginPage = new LoginPage(page);
-
-    await page.goto('/');
-    await headerComponent.irParaPerfil();
-
-    // Ação
-    await loginPage.loginAdmin();
-   
-    // Validação
-    await sidebar.loginExibeTodosMenus();
-    await calculadoraPage.calculadoraInicial();
-
-    // Ação
-    await sidebar.irParaCafes();
-
-    // Validação
-    //await loginPage.qtdeCafesAdmin();
-    await expect(cafePage.tabelaCafes).toBeVisible();
-    await expect(cafePage.headTabela).toContainText('Pontuação');
-    //await expect(cafePage.tituloCafes).toBeVisible();
-    //await expect(cafePage.totalCafes).toContainText('Total de cafés: 4');
-//
-    //// Ação de logout
-    //await loginPage.acaoCompletaLogout();
-//
-    //// Validação
-    //await expect(headerComponent.linkPerfil).toContainText('Perfil');
-});
-
-test ('Validar exibição dos cafés do Usuário que possui role User', async ({ page }) => {
-    // Validar o acesso ao menu Cafés e a exibição de todos os cafés cadastrados para um usuário com role User.
-    
-    // Preparação
-    const sidebar = new SidebarComponent(page);
-    const calculadoraPage = new CalculadoraPage(page);
-    const cafePage = new CafePage(page);
-    const headerComponent = new HeaderComponent(page);
-    const loginPage = new LoginPage(page);
-
-    await page.goto('/');
-    await headerComponent.irParaPerfil();
-
-    // Ação
-    await loginPage.campoEmail.fill('monicamendonca66@gmail.com');
-    await loginPage.campoSenha.fill('Admin2*');
-    await loginPage.fazerLogin();
-   
-    // Validação
-    await sidebar.loginExibeTodosMenus();
-    await calculadoraPage.camposVisiveisVazios();
-
-    // Ação
-    await sidebar.irParaCafes();
-
-    // Validação
-    await expect(cafePage.tituloCafes).toBeVisible();
-    await expect(cafePage.totalCafes).toContainText('Total de cafés: 2');
-
-    // Ação de logout
     await loginPage.acaoCompletaLogout();
 
     // Validação
+    await sidebar.sidebarInicial();
+    await calculadoraPage.calculadoraInicial();
     await expect(headerComponent.linkPerfil).toContainText('Perfil');
 });
 
-//test ('Validar mensagens de erro no login');
+test ('Validar login com sucesso com todos os usuários', async ({ page }) => {
+    // Validar que o login será feito com sucessos para todos os usuários da lista.
+
+    const calculadoraPage = new CalculadoraPage(page);
+    const sidebarComponent = new SidebarComponent(page);
+    const headerComponent = new HeaderComponent(page);
+    const loginPage = new LoginPage(page);
+    const perfilComponent = new PerfilComponent(page);
+    const perfilPage = new PerfilPage(page);
+
+    for (const usuario of loginPage.listaUsuarios) {
+        await page.goto('/');
+        await headerComponent.irParaPerfil();
+        await loginPage.login(usuario);
+        await expect(headerComponent.linkPerfil).toContainText(usuario.email);
+        await calculadoraPage.calculadoraInicial();
+        await headerComponent.irParaPerfil();
+        if (await perfilPage.dadosPerfil.textContent() === 'Perfil: Administrador') {
+            await perfilPage.perfilEBotoes.screenshot({ path: `cafemanagerweb/screenshots/screenshot_${usuario.nome}.png`, fullPage: true });
+            await sidebarComponent.loginExibeTodosMenus();
+            await loginPage.acaoCompletaLogout();
+        }
+            else {
+                await perfilPage.perfilEBotoes.screenshot({ path: `cafemanagerweb/screenshots/screenshot_${usuario.nome}.png`, fullPage: true });
+                await sidebarComponent.loginMenusUser();
+                await loginPage.acaoCompletaLogout();
+            }
+    }
+});

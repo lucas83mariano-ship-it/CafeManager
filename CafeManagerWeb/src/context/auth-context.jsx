@@ -10,10 +10,20 @@ export function AuthProvider({ children }) {
 
     const [usuario, setUsuario] = useState(null);
 
+        console.log('AUTH PROVIDER RENDER');
+        console.log('TOKEN:', token);
+        console.log('USUARIO:', usuario);
+        console.log('IS AUTHENTICATED:', !!token);
+        console.log(
+            'LOCAL STORAGE:',
+            localStorage.getItem('access_token')
+        );
+
     useEffect(() => {
 
         async function carregarUsuario() {
 
+            console.log('AUTH EFFECT EXECUTOU');
             const tokenSalvo = localStorage.getItem("access_token");
 
             if (!tokenSalvo) {
@@ -37,6 +47,7 @@ export function AuthProvider({ children }) {
 
             catch (erro) {
 
+                console.log('ERRO NO CARREGAR USUARIO:', erro);
                 logout();
 
             }
@@ -71,6 +82,7 @@ export function AuthProvider({ children }) {
 
     function logout() {
 
+        console.log('LOGOUT EXECUTOU');
         localStorage.removeItem("access_token");
         
         delete api.defaults.headers.Authorization;

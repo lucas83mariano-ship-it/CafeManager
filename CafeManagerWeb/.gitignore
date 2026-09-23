@@ -29,6 +29,8 @@ dist-ssr
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+/screenshots/
+/cafemanagerweb/
 
 # Envs
 

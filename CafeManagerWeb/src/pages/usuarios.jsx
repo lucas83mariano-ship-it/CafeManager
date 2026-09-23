@@ -342,6 +342,8 @@ function Usuarios() {
 
                         <tr>
 
+                            <th>ID</th>
+                            
                             <th>Nome</th>
 
                             <th>E-mail</th>
@@ -360,6 +362,10 @@ function Usuarios() {
 
                             <tr key={usuario.id}>
 
+                                <td>
+                                    {usuario.id}
+                                </td>
+                                
                                 <td>
                                     {usuario.nome}
                                 </td>
