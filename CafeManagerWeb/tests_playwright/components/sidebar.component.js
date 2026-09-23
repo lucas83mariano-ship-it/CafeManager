@@ -63,6 +63,13 @@ export class SidebarComponent{
     }
 
     // Validações
+    async sidebarInicial() {
+        await expect(this.menuCalculadora).toBeVisible();
+        await expect(this.menuCafes).not.toBeVisible();
+        await expect(this.menuReceitas).not.toBeVisible();
+        await expect(this.menuUsuarios).not.toBeVisible();
+    }
+    
     async loginExibeTodosMenus() {
         await expect(this.menuCafes).toBeVisible();
         await expect(this.menuReceitas).toBeVisible();
@@ -74,6 +81,7 @@ export class SidebarComponent{
         await expect(this.menuCafes).toBeVisible();
         await expect(this.menuReceitas).toBeVisible();
         await expect(this.menuCalculadora).toBeVisible();
+        await expect(this.menuUsuarios).not.toBeVisible();
     }
 
 }

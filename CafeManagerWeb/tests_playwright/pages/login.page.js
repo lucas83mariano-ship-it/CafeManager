@@ -3,11 +3,50 @@ import { HeaderComponent } from '../components/header.component';
 
 export class LoginPage {
 
-    constructor(page) {
+    constructor(page,request) {
         this.page = page;
         this.request = request;
         this.headerComponent = new HeaderComponent(page);
+        this.usuarioAdmin = {
+           nome: 'Admin',
+           email: 'admin@admin.com',
+           senha: 'AdminUsu123*'
+        };
+        this.usuarioLucas = {
+            nome: 'Lucas',
+            email: 'lucas83mariano@gmail.com',
+            senha: 'Admin1*'
+        };
+        this.usuarioMonica = {
+            nome: 'Mônica',
+            email: 'monicamendonca66@gmail.com',
+            senha: 'Admin2*'
+        };
+        this.usuarioTestador = {
+            nome: 'Testador',
+            email: 'testante@testador.com',
+            senha: 'teste123*'
+        }
+        this.listaUsuarios = [
+            {
+               nome: 'Admin',
+               email: 'admin@admin.com',
+               senha: 'AdminUsu123*'
+            },
+            {
+                nome: 'Lucas',
+                email: 'lucas83mariano@gmail.com',
+                senha: 'Admin1*'
+            },
+            {
+                nome: 'Mônica',
+                email: 'monicamendonca66@gmail.com',
+                senha: 'Admin2*'
+            }
+        ]
     }
+
+    // Objetos
 
     // Títulos da página
     get tituloPerfil() {
@@ -35,22 +74,9 @@ export class LoginPage {
     get botaoSair() {
         return this.page.getByRole('button', { name: 'Sair' });
     }
-
-    // Campos da página para Criar Conta
-
-    // Botões para Criar Conta
-
-    get botaoCriarConta() {
-        return this.page.getByRole('button', { name: 'Criar Conta' });
-    }
-
-    // Botão Voltar
-    get botaoVoltar() {
-        return this.page.getByRole('button', { name: 'Voltar' });
-    }
-
+    
     // Ações da página (métodos)
-    async fazerLogin() {
+    async clicarEntrar() {
         await this.botaoEntrar.click();
     }
 
@@ -58,16 +84,29 @@ export class LoginPage {
         await this.botaoVoltar.click();
     }
 
-    async loginAdmin() {
-        await this.campoEmail.fill('admin@admin.com');
-        await this.campoSenha.fill('AdminUsu123*');
-        await this.fazerLogin();
+    async login(meusUsuarios) {
+        await this.campoEmail.fill(meusUsuarios.email);
+        await this.campoSenha.fill(meusUsuarios.senha);
+        await this.clicarEntrar();
+    }
+    
+    async login2(meuUsuario) {
+        const resultado = this.listaUsuarios.filter(usuario => usuario.email === meuUsuario)
+        await this.campoEmail.fill(resultado[0].email);
+        await this.campoSenha.fill(resultado[0].senha);
+        await this.clicarEntrar();
     }
 
-    async loginLucas() {
-        await this.campoEmail.fill('lucas83mariano@gmail.com');
-        await this.campoSenha.fill('Admin1*');
-        await this.fazerLogin();
+    async loginAdmin() {
+        await this.campoEmail.fill(this.usuarioAdmin.email);
+        await this.campoSenha.fill(this.usuarioAdmin.senha);
+        await this.clicarEntrar();
+    }
+
+    async loginUmUsuario() {
+        await this.campoEmail.fill(this.listaUsuarios[2].email);
+        await this.campoSenha.fill(this.listaUsuarios[2].senha);
+        await this.clicarEntrar();
     }
 
     async fazerLogout() {
@@ -79,24 +118,39 @@ export class LoginPage {
         await this.fazerLogout();
     }
 
-    // Capturar quantidade de cafés dependendo do usuário logado
+    // Faz login na API, realiza um get no endpoint '/cafes' e armazena a quantidade de cafés recebidos na resposta em json.
     async qtdeCafesAdmin(){
-        const loginAdmin = await request.post('/login', {
+        const loginAdmin = await this.request.post('http://localhost:8000/login', {
             data: {
                 email: 'admin@admin.com',
                 senha: 'AdminUsu123*'
             }
         });
         const dadosLogin = await loginAdmin.json();
-        const resposta = await request.get('/cafes', {
+        const resposta = await this.request.get('http://localhost:8000/cafes', {
             headers: {Authorization: `Bearer ${dadosLogin.access_token}`}
         });
         const cafesApi= await resposta.json();
-
-        
-        await expect(tabela).toHaveCount(cafesApi.length);
-
         console.log(cafesApi);
     }
 
+    // Faz login na API, realiza um get no endpoint '/usuarios' e armazena a lista de IDs, recebidos na resposta em json, em um array de números.
+    async apiAdminQtdeUsuarios() {
+        const loginAdmin = await this.request.post('http://localhost:8000/login', {
+            data: {
+                email: 'admin@admin.com',
+                senha: 'AdminUsu123*'
+            }
+        });
+        const dadosLogin = await loginAdmin.json();
+        const respostaToken = await this.request.get('http://localhost:8000/usuarios', {
+            headers: {Authorization: `Bearer ${dadosLogin.access_token}`
+            }
+        });
+        const respostaApi = await respostaToken.json();
+        const idsApi = await respostaApi.map(item => item.id);
+        /* const idsApi = await respostaApi.evaluateAll(
+        list => list.map(element => element.textContent)); */
+        return (idsApi);
+    }
 }
