@@ -13,28 +13,29 @@ __pycache__/
 
 # Arquivos temporários
 *.log
-
-# Outro arquivo
-.env
-*.robot
-*.log
 *.tmp
 *.xml
-report.html
-package-lock.json
-package.json
-postman/*backup*.json
-postman/*environment2*.json
-postman/*environment3*.json
 
+# Ambiente
+.env
+
+# Dependências e arquivos gerados
 node_modules/
 /newman/
 /QAx/
 /tests_robot/
 /drivers/
-Testes.txt
+/results/
 
-log.html
+# Relatórios Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Arquivos específicos
+postman/*backup*.json
+postman/*environment2*.json
+postman/*environment3*.json
 postman/CafeManager Local.postman_environment.json
-postman/Team Workspace.postman_globals.json
-postman/meuAmbiente.json
