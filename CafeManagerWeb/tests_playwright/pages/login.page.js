@@ -153,4 +153,7 @@ export class LoginPage {
         list => list.map(element => element.textContent)); */
         return (idsApi);
     }
+
+    // Mensagens exibidas em tela
+    
 }
