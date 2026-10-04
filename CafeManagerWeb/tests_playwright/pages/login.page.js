@@ -27,6 +27,11 @@ export class LoginPage {
             email: 'testante@testador.com',
             senha: 'teste123*'
         }
+        this.usuarioInexistente = {
+            nome: 'Inexistente',
+            email: 'inexiste@inexistente.com',
+            senha: 'inexistente147'
+        }
         this.listaUsuarios = [
             {
                nome: 'Admin',
@@ -152,8 +157,5 @@ export class LoginPage {
         /* const idsApi = await respostaApi.evaluateAll(
         list => list.map(element => element.textContent)); */
         return (idsApi);
-    }
-
-    // Mensagens exibidas em tela
-    
+    }    
 }
