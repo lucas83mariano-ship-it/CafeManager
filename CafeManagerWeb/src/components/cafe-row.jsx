@@ -49,9 +49,28 @@ function CafeRow({
 
     }
 
+    function clicarEditar(event) {
+
+        event.stopPropagation();
+
+        editarCafe();
+
+    }
+
+    function clicarExcluir(event) {
+
+        event.stopPropagation();
+
+        excluirCafe();
+
+    }
+
     return (
 
-        <tr>
+        <tr
+            onClick={editarCafe}
+            style={{ cursor: "pointer" }}
+        >
 
             <td>{cafe.usuario_id}</td>
             
@@ -67,7 +86,7 @@ function CafeRow({
 
                 <IconButton
                     title="Editar café"
-                    onClick={editarCafe}
+                    onClick={clicarEditar}
                 >
 
                     Editar
@@ -76,7 +95,7 @@ function CafeRow({
 
                 <IconButton
                     title="Excluir café"
-                    onClick={excluirCafe}
+                    onClick={clicarExcluir}
                 >
 
                     Excluir
