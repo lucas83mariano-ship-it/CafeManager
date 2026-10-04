@@ -6,8 +6,7 @@ import { HeaderComponent } from './components/header.component';
 import { LoginPage } from './pages/login.page';
 import { PerfilComponent } from './components/perfil.component';
 import { PerfilPage } from './pages/perfil.page';
-//import { log } from 'node:console';
-//import { UsuariosPage } from './pages/usuarios.page';
+import { TIMEOUT } from 'node:dns';
 
 test ('Validar exibição dos campos de login', async ({ page }) => {
     // Validar a exibição dos campos de login (e-mail, senha, entrar) após clicar em Entrar
@@ -52,7 +51,7 @@ test ('Validar login com sucesso com usuário Admin', async ({ page }) => {
 
     // Ação
     await headerComponent.irParaPerfil();
-    await loginPage.login2(usuario[0]);
+    await loginPage.login(usuario[0]);
    
     // Validação
     await sidebar.loginExibeTodosMenus();
@@ -79,7 +78,7 @@ test ('Validar login com sucesso com usuário User', async ({ page }) => {
 
     // Ação
     await headerComponent.irParaPerfil();
-    await loginPage.login2(usuario[0]);
+    await loginPage.login(usuario[0]);
 
     // Validação
     await sidebar.loginMenusUser();
@@ -179,22 +178,89 @@ test ('Validar login com sucesso com todos os usuários', async ({ page }) => {
     }
 });
 
-test ('Validar mensagem de login com email ou senha incorretos', async ({ page }) => {
-    // Validar que será exibido a mensagem "Email ou senha inválidos" ao digitar email e/ou senha incorretos no login.
+test ('Validar mensagem de login incorreto com email e senha inválidos', async ({page})=> {
+    // Validar que será exibido a mensagem "Email ou senha inválidos" ao digitar email e senha incorretos.
+
+    // Preparação
+    const headerComponent = new HeaderComponent(page);
+    const loginPage = new LoginPage(page);
+    
+    // Ação
+    await page.goto('/');
+    await headerComponent.irParaPerfil();
+    await loginPage.campoEmail.fill(loginPage.usuarioInexistente.email);
+    await loginPage.campoSenha.fill(loginPage.usuarioInexistente.senha);
+    await expect(loginPage.botaoEntrar).toBeVisible();
+    const dialogPromise = loginPage.page.waitForEvent('dialog');
+    await loginPage.botaoEntrar.click();
+
+    // Validação
+    const dialog = await dialogPromise;
+    expect(dialog.type()).toBe('alert');
+    expect(dialog.message()).toBe('Email ou senha inválidos.');
+    await dialog.dismiss();
+});
+
+test ('Validar mensagem de login incorreto com email ou senha inválidos', async ({ page }) => {
+    // Validar que será exibido a mensagem "Email ou senha inválidos" ao digitar email ou senha incorretos no login.
 
     // Preparação
     const headerComponent = new HeaderComponent(page);
     const loginPage = new LoginPage(page);
 
-    await page.goto('/');
-
     // Ação
+    await page.goto('/');
     await headerComponent.irParaPerfil();
     await loginPage.campoEmail.fill(loginPage.listaUsuarios[0].email);
     await loginPage.campoSenha.fill(loginPage.listaUsuarios[1].senha);
     
     await expect(loginPage.botaoEntrar).toBeVisible();
     await expect(loginPage.botaoEntrar).toBeEnabled();
+    const dialogPromise = loginPage.page.waitForEvent('dialog');
+    await loginPage.clicarEntrar();
+    console.log('Clique realizado. Aguardando dialog...');
+
+    // Validação
+    const dialog = await dialogPromise;
+    console.log('Dialog capturado!');
+    console.log('Tipo:', dialog.type());
+    console.log('Mensagem:', dialog.message());
+    expect(dialog.type()).toBe('alert');
+    expect(dialog.message()).toBe('Email ou senha inválidos.');
+    await dialog.dismiss();
+});
+
+test ('Validar mensagem de login incorreto com email e senha em branco', async ({page})=> {
+    // Validar que será exibido a mensagem "Email ou senha inválidos" ao preencher apenas email e senha e clicar em entrar.
+
+    // Preparação
+    const headerComponent = new HeaderComponent(page);
+    const loginPage = new LoginPage(page);
+
+    // Ação
+    await page.goto('/');
+    await headerComponent.irParaPerfil();
+    const dialogPromise = loginPage.page.waitForEvent('dialog');
+    await loginPage.clicarEntrar();
+
+    // Validação
+    const dialog = await dialogPromise;
+    expect(dialog.type()).toBe('alert');
+    expect(dialog.message()).toBe('Email ou senha inválidos.');
+    await dialog.dismiss();
+});
+
+test ('Validar mensagem de login incorreto com email ou senha em branco', async ({page})=> {
+    // Validar que será exibido a mensagem "Email ou senha inválidos" ao preencher apenas email ou senha e clicar em entrar.
+
+    // Preparação
+    const headerComponent = new HeaderComponent(page);
+    const loginPage = new LoginPage(page);
+
+    // Ação
+    await page.goto('/');
+    await headerComponent.irParaPerfil();
+    await loginPage.campoEmail.fill(loginPage.usuarioAdmin.email);
     const dialogPromise = loginPage.page.waitForEvent('dialog');
     await loginPage.clicarEntrar();
 
