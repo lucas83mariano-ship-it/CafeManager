@@ -1,11 +1,14 @@
 import { cadastrarCafe } from "../services/cafe-service";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "../components/ui/card";
 import CafeForm from "../components/cafe-form";
+import Mensagem from "../components/mensagem";
 
 function CadastrarCafe() {
 
     const navigate = useNavigate();
+    const [mensagem, setMensagem] = useState(null);
 
     async function salvar(cafe) {
 
@@ -20,7 +23,13 @@ function CadastrarCafe() {
 
             console.error(erro);
 
-            alert("Erro ao cadastrar.");
+            setMensagem({
+                texto:
+                    erro.response?.data?.detail ||
+                    erro.message ||
+                    "Erro ao cadastrar.",
+                tipo: "erro",
+            });
 
         }
 
@@ -31,6 +40,12 @@ function CadastrarCafe() {
         <>
 
             <h1>Novo Café</h1>
+
+            <Mensagem 
+                mensagem={mensagem?.texto}
+                tipo={mensagem?.tipo}
+                onClose={() => setMensagem(null)} 
+            />
 
             <Card>
 

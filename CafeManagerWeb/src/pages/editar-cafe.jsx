@@ -1,8 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
 import Button from "../components/ui/button";
 import Card from "../components/ui/card";
 import Loading from "../components/ui/loading";
 import CafeForm from "../components/cafe-form";
+import Mensagem from "../components/mensagem";
 
 import useCafe from "../hooks/use-cafe";
 
@@ -13,6 +15,8 @@ function EditarCafe() {
     const navigate = useNavigate();
 
     const { id } = useParams();
+
+    const [mensagem, setMensagem] = useState(null);
 
     const {
 
@@ -36,7 +40,13 @@ function EditarCafe() {
 
             console.error(erroAtualizacao);
 
-            alert("Erro ao atualizar.");
+            setMensagem({
+                texto:
+                    erroAtualizacao.response?.data?.detail ||
+                    erroAtualizacao.message ||
+                    "Erro ao atualizar.",
+                tipo: "erro",
+            });
 
         }
 
@@ -55,6 +65,12 @@ function EditarCafe() {
         <>
 
             <h1>Editar Café</h1>
+
+            <Mensagem 
+                mensagem={mensagem?.texto}
+                tipo={mensagem?.tipo}
+                onClose={() => setMensagem(null)} 
+            />
 
             <Card>
 

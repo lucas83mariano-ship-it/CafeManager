@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/auth-context";
+import Mensagem from "../components/mensagem";
 
 function LoginForm({ onSuccess }) {
 
@@ -8,6 +9,8 @@ function LoginForm({ onSuccess }) {
     const [senha, setSenha] = useState("");
 
     const { login } = useAuth();
+
+    const [mensagem, setMensagem] = useState("");
 
     async function fazerLogin(e) {
 
@@ -27,7 +30,10 @@ function LoginForm({ onSuccess }) {
 
         catch {
 
-            alert("E-mail ou senha inválidos.");
+            setMensagem({
+                texto: "E-mail ou senha inválidos.",
+                tipo: "erro",
+            });
 
         }
 
@@ -37,6 +43,8 @@ function LoginForm({ onSuccess }) {
 
         <form onSubmit={fazerLogin}>
 
+            <Mensagem mensagem={mensagem} />
+            
             <input
                 type="email"
                 placeholder="E-mail"

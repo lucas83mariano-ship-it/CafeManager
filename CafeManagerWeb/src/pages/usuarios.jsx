@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
+
 import {
     listarUsuarios,
     atualizarUsuarioPorId,
     alterarSenhaPorId
 } from "../services/usuario-service";
 
-function Usuarios() {
+import Mensagem from "../components/mensagem";
 
+function Usuarios() {
     const [usuarios, setUsuarios] = useState([]);
     const [carregando, setCarregando] = useState(true);
     const [editando, setEditando] = useState(null);
@@ -16,74 +18,51 @@ function Usuarios() {
     const [alterandoSenha, setAlterandoSenha] = useState(false);
     const [novaSenha, setNovaSenha] = useState("");
     const [salvandoSenha, setSalvandoSenha] = useState(false);
+    const [mensagem, setMensagem] = useState(null);
 
     async function carregarUsuarios() {
-
         try {
-
             const dados = await listarUsuarios();
-
             setUsuarios(dados);
-
         }
-
         catch (erro) {
-
-            alert(
-                erro.response?.data?.detail ||
-                "Não foi possível carregar os usuários."
-            );
-
+            setMensagem({
+                texto:
+                    erro.response?.data?.detail ||
+                    "Não foi possível carregar os usuários.",
+                tipo: "erro",
+            });
         }
-
         finally {
-
             setCarregando(false);
-
         }
-
     }
 
     useEffect(() => {
-
         carregarUsuarios();
-
     }, []);
 
     function iniciarEdicao(usuario) {
-
+        setMensagem(null);
         setEditando(usuario);
-
         setNome(usuario.nome);
-
         setEmail(usuario.email);
-
         setAlterandoSenha(false);
-
         setNovaSenha("");
-
     }
 
     function cancelarEdicao() {
-
         setEditando(null);
-
         setNome("");
-
         setEmail("");
-
         setAlterandoSenha(false);
-
         setNovaSenha("");
-
     }
 
     async function salvarEdicao(event) {
-
         event.preventDefault();
 
         try {
-
             setSalvando(true);
 
             const usuarioAtualizado =
@@ -103,49 +82,39 @@ function Usuarios() {
 
             cancelarEdicao();
 
-            alert("Usuário atualizado com sucesso.");
-
+            setMensagem({
+                texto: "Usuário atualizado com sucesso.",
+                tipo: "sucesso",
+            });
         }
-
         catch (erro) {
-
-            alert(
-                erro.response?.data?.detail ||
-                "Não foi possível atualizar o usuário."
-            );
-
+            setMensagem({
+                texto:
+                    erro.response?.data?.detail ||
+                    "Não foi possível atualizar o usuário.",
+                tipo: "erro",
+            });
         }
-
         finally {
-
             setSalvando(false);
-
         }
-
     }
 
     function iniciarAlteracaoSenha() {
-
+        setMensagem(null);
         setAlterandoSenha(true);
-
         setNovaSenha("");
-
     }
 
     function cancelarAlteracaoSenha() {
-
         setAlterandoSenha(false);
-
         setNovaSenha("");
-
     }
 
     async function salvarNovaSenha(event) {
-
         event.preventDefault();
 
         try {
-
             setSalvandoSenha(true);
 
             await alterarSenhaPorId(
@@ -154,60 +123,52 @@ function Usuarios() {
             );
 
             setAlterandoSenha(false);
-
             setNovaSenha("");
 
-            alert("Senha alterada com sucesso.");
-
+            setMensagem({
+                texto: "Senha alterada com sucesso.",
+                tipo: "sucesso",
+            });
         }
-
         catch (erro) {
-
-            alert(
-                erro.response?.data?.detail ||
-                "Não foi possível alterar a senha."
-            );
-
+            setMensagem({
+                texto:
+                    erro.response?.data?.detail ||
+                    "Não foi possível alterar a senha.",
+                tipo: "erro",
+            });
         }
-
         finally {
-
             setSalvandoSenha(false);
-
         }
-
     }
 
     if (carregando) {
-
         return <p>Carregando usuários...</p>;
-
     }
 
     return (
-
         <div>
-
             <h1>Usuários</h1>
+
+            <Mensagem
+                mensagem={mensagem?.texto}
+                tipo={mensagem?.tipo}
+                onClose={() => setMensagem(null)}
+            />
 
             <br />
 
             {editando && (
-
                 <form onSubmit={salvarEdicao}>
-
                     <h2>Editar usuário</h2>
-
                     <br />
 
                     <div>
-
                         <label htmlFor="nome">
                             Nome
                         </label>
-
                         <br />
-
                         <input
                             id="nome"
                             type="text"
@@ -217,19 +178,15 @@ function Usuarios() {
                             }
                             required
                         />
-
                     </div>
 
                     <br />
 
                     <div>
-
                         <label htmlFor="email">
                             E-mail
                         </label>
-
                         <br />
-
                         <input
                             id="email"
                             type="email"
@@ -239,7 +196,6 @@ function Usuarios() {
                             }
                             required
                         />
-
                     </div>
 
                     <br />
@@ -252,9 +208,7 @@ function Usuarios() {
                             ? "Salvando..."
                             : "Salvar"}
                     </button>
-
                     {" "}
-
                     <button
                         type="button"
                         onClick={cancelarEdicao}
@@ -265,123 +219,84 @@ function Usuarios() {
 
                     <br />
                     <br />
-
                     <hr />
 
-                        <h3>Senha</h3>
-                                                
-                        {!alterandoSenha ? (
-                        
+                    <h3>Senha</h3>
+
+                    {!alterandoSenha ? (
+                        <button
+                            type="button"
+                            onClick={iniciarAlteracaoSenha}
+                        >
+                            Alterar senha
+                        </button>
+                    ) : (
+                        <div>
+                            <label htmlFor="novaSenha">
+                                Nova senha
+                            </label>
+                            <br />
+                            <input
+                                id="novaSenha"
+                                type="password"
+                                value={novaSenha}
+                                onChange={(event) =>
+                                    setNovaSenha(event.target.value)
+                                }
+                                required
+                            />
+
+                            <br />
+                            <br />
+
                             <button
                                 type="button"
-                                onClick={iniciarAlteracaoSenha}
+                                onClick={salvarNovaSenha}
+                                disabled={salvandoSenha}
                             >
-                                Alterar senha
+                                {salvandoSenha
+                                    ? "Salvando..."
+                                    : "Salvar nova senha"}
                             </button>
-                        
-                        ) : (
-                        
-                            <div>
-                            
-                                <label htmlFor="novaSenha">
-                                    Nova senha
-                                </label>
-                        
-                                <br />
-                        
-                                <input
-                                    id="novaSenha"
-                                    type="password"
-                                    value={novaSenha}
-                                    onChange={(event) =>
-                                        setNovaSenha(event.target.value)
-                                    }
-                                    required
-                                />
-                        
-                                <br />
-                                <br />
-                                
-                                <button
-                                    type="button"
-                                    onClick={salvarNovaSenha}
-                                    disabled={salvandoSenha}
-                                >
-                                    {salvandoSenha
-                                        ? "Salvando..."
-                                        : "Salvar nova senha"}
-                                </button>
-                                    
-                                {" "}
-                                    
-                                <button
-                                    type="button"
-                                    onClick={cancelarAlteracaoSenha}
-                                    disabled={salvandoSenha}
-                                >
-                                    Cancelar
-                                </button>
-                                    
-                            </div>
-                        
-                        )}
-
+                            {" "}
+                            <button
+                                type="button"
+                                onClick={cancelarAlteracaoSenha}
+                                disabled={salvandoSenha}
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    )}
                 </form>
-
             )}
 
             {usuarios.length === 0 ? (
-
                 <p>Nenhum usuário cadastrado.</p>
-
             ) : (
-
                 <table>
-
                     <thead>
-
                         <tr>
-
                             <th>ID</th>
-                            
                             <th>Nome</th>
-
                             <th>E-mail</th>
-
                             <th>Perfil</th>
-
                             <th>Ações</th>
-
                         </tr>
-
                     </thead>
 
                     <tbody>
-
                         {usuarios.map((usuario) => (
-
                             <tr key={usuario.id}>
-
-                                <td>
-                                    {usuario.id}
-                                </td>
-                                
-                                <td>
-                                    {usuario.nome}
-                                </td>
-
-                                <td>
-                                    {usuario.email}
-                                </td>
-
+                                <td>{usuario.id}</td>
+                                <td>{usuario.nome}</td>
+                                <td>{usuario.email}</td>
                                 <td>
                                     {usuario.role === "admin"
                                         ? "Admin"
                                         : "Amante de café"}
                                 </td>
-
                                 <td>
-
                                     <button
                                         type="button"
                                         onClick={() =>
@@ -390,23 +305,14 @@ function Usuarios() {
                                     >
                                         Editar
                                     </button>
-
                                 </td>
-
                             </tr>
-
                         ))}
-
                     </tbody>
-
                 </table>
-
             )}
-
         </div>
-
     );
-
 }
 
 export default Usuarios;

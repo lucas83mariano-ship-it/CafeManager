@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/auth-context";
 import { getRoleLabel } from "../utils/role-utils";
 import { cadastrar } from "../services/auth-service";
 import { atualizarUsuario as atualizarUsuarioApi, excluirUsuario, alterarSenha } from "../services/usuario-service";
+import Mensagem from "../components/mensagem";
+import Confirmacao from "../components/ui/confirmacao";
 
 export default function Perfil() {
 
@@ -20,6 +22,8 @@ export default function Perfil() {
     const [confirmarNovaSenha, setConfirmarNovaSenha] = useState("");
     const [nomeEdicao, setNomeEdicao] = useState("");
     const [emailEdicao, setEmailEdicao] = useState("");
+    const [mensagem, setMensagem] = useState(null);
+    const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
 
     const navigate = useNavigate();
 
@@ -31,6 +35,57 @@ export default function Perfil() {
         logout,
     } = useAuth();
 
+    useEffect(() => {
+
+        if (isAuthenticated || mensagem) {
+            return;
+        }
+    
+        function tratarTecla(event) {
+        
+            if (event.key !== "Escape") {
+                return;
+            }
+        
+            event.preventDefault();
+        
+            if (modoCadastro) {
+            
+                setModoCadastro(false);
+            
+                setNome("");
+                setEmail("");
+                setSenha("");
+                setConfirmarSenha("");
+            
+                return;
+            
+            }
+        
+            voltar();
+        
+        }
+    
+        document.addEventListener(
+            "keydown",
+            tratarTecla
+        );
+    
+        return () => {
+        
+            document.removeEventListener(
+                "keydown",
+                tratarTecla
+            );
+        
+        };
+    
+    }, [
+        isAuthenticated,
+        mensagem,
+        modoCadastro,
+    ]);
+    
     async function fazerLogin(e) {
 
         e.preventDefault();
@@ -46,13 +101,15 @@ export default function Perfil() {
         catch (erro) {
 
             console.error(erro);
-                
-            alert(
-                erro.response?.data?.detail ||
-                erro.message ||
-                "Erro ao realizar login."
-            );
-        
+
+            setMensagem({
+                texto:
+                    erro.response?.data?.detail ||
+                    erro.message ||
+                    "Erro ao realizar login.",
+                tipo: "erro",
+            });
+
         }
 
     }
@@ -63,7 +120,10 @@ export default function Perfil() {
 
         if (senha !== confirmarSenha) {
 
-            alert("As senhas não conferem.");
+            setMensagem({
+                texto: "As senhas não conferem.",
+                tipo: "erro",
+            });
 
             return;
 
@@ -72,96 +132,103 @@ export default function Perfil() {
         setCarregando(true);
 
         try {
-        
+
             await cadastrar(
                 nome,
                 email,
                 senha,
             );
-        
+
         }
         catch (erro) {
 
             const detalhe = erro.response?.data?.detail;
-                
+
             if (Array.isArray(detalhe)) {
-            
+
                 const mensagens = detalhe.map((item) => {
-                
+
                     if (item.loc?.includes("nome")) {
-                    
+
                         return "Informe o nome de usuário.";
-                    
+
                     }
-                
+
                     if (item.loc?.includes("email")) {
-                    
+
                         if (
                             item.type === "value_error" ||
                             item.type === "string_pattern_mismatch" ||
                             item.msg?.toLowerCase().includes("valid email") ||
                             item.msg?.toLowerCase().includes("email")
                         ) {
-                        
+
                             return "Informe um e-mail válido.";
-                        
+
                         }
-                    
+
                         return "Informe o e-mail.";
-                    
+
                     }
-                
+
                     if (item.loc?.includes("senha")) {
-                    
+
                         return "Informe a senha.";
-                    
+
                     }
-                
+
                     return item.msg || "Dados inválidos.";
-                
+
                 });
-            
-                alert(mensagens.join("\n"));
-            
+
+                setMensagem({
+                    texto: mensagens.join("\n"),
+                    tipo: "erro",
+                });
+
             } else {
-            
-                alert(
-                    detalhe ||
-                    "Não foi possível realizar o cadastro."
-                );
-            
+
+                setMensagem({
+                    texto:
+                        detalhe ||
+                        "Não foi possível realizar o cadastro.",
+                    tipo: "erro",
+                });
+
             }
-        
+
             setCarregando(false);
-        
+
             return;
-        
+
         }
 
         try {
-        
+
             await login(
                 email,
                 senha,
             );
-        
+
         }
         catch (erro) {
-        
-            alert(
-                "Sua conta foi criada com sucesso, porém não foi possível fazer o login automático. Faça o login manualmente."
-            );
-        
+
+            setMensagem({
+                texto:
+                    "Sua conta foi criada com sucesso, porém não foi possível fazer o login automático. Faça o login manualmente.",
+                tipo: "erro",
+            });
+
             setCarregando(false);
-        
+
             setModoCadastro(false);
-        
+
             setSenha("");
-        
+
             setConfirmarSenha("");
-        
+
             return;
-        
+
         }
 
         setModoCadastro(false);
@@ -182,6 +249,8 @@ export default function Perfil() {
 
     function alterarDados() {
 
+        setMensagem(null);
+
         setNomeEdicao(usuario.nome);
 
         setEmailEdicao(usuario.email);
@@ -191,6 +260,8 @@ export default function Perfil() {
     }
 
     function abrirAlterarSenha() {
+
+        setMensagem(null);
 
         setSenhaAtual("");
 
@@ -205,71 +276,78 @@ export default function Perfil() {
     async function salvarAlteracaoSenha(e) {
 
         e.preventDefault();
-        
+
         if (!senhaAtual.trim()) {
-        
-            alert("Informe sua senha atual.");
-        
+
+            setMensagem({
+                texto: "Informe sua senha atual.",
+                tipo: "erro",
+            });
+
             return;
-        
+
         }
-    
+
         if (!novaSenha.trim()) {
-        
-            alert("Informe a nova senha.");
-        
+
+            setMensagem({
+                texto: "Informe a nova senha.",
+                tipo: "erro",
+            });
+
             return;
-        
+
         }
-    
+
         if (novaSenha !== confirmarNovaSenha) {
-        
-            alert("A confirmação da nova senha não confere.");
-        
+
+            setMensagem({
+                texto: "A confirmação da nova senha não confere.",
+                tipo: "erro",
+            });
+
             return;
-        
+
         }
-    
+
         try {
-        
+
             const resposta = await alterarSenha(
-            
+
                 senhaAtual,
-            
+
                 novaSenha,
-            
+
             );
-        
-            alert(
-            
-                resposta.mensagem ||
-            
-                "Senha alterada com sucesso."
-            
-            );
-        
+
+            setMensagem({
+                texto:
+                    resposta.mensagem ||
+                    "Senha alterada com sucesso.",
+                tipo: "sucesso",
+            });
+
             setSenhaAtual("");
-        
+
             setNovaSenha("");
-        
+
             setConfirmarNovaSenha("");
-        
+
             setModoAlterarSenha(false);
-        
+
         }
-    
+
         catch (erro) {
-        
-            alert(
-            
-                erro.response?.data?.detail ||
-            
-                "Não foi possível alterar sua senha."
-            
-            );
-        
+
+            setMensagem({
+                texto:
+                    erro.response?.data?.detail ||
+                    "Não foi possível alterar sua senha.",
+                tipo: "erro",
+            });
+
         }
-    
+
     }
 
     function cancelarAlterarSenha() {
@@ -287,34 +365,54 @@ export default function Perfil() {
     async function salvarDados(e) {
 
         e.preventDefault();
-        
+
+        const emailValido =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEdicao);
+
+        if (!emailValido) {
+
+            setMensagem({
+                texto: "Informe um e-mail válido.",
+                tipo: "erro",
+            });
+
+            return;
+
+        }
+
         try {
-        
+
             const usuarioAtualizado =
                 await atualizarUsuarioApi(
                     nomeEdicao,
                     emailEdicao,
                 );
-            
+
             atualizarUsuario(
                 usuarioAtualizado
             );
-        
+
             setModoEdicao(false);
-        
-            alert("Dados atualizados com sucesso.");
-        
+
+            setMensagem({
+                texto: "Dados atualizados com sucesso.",
+                tipo: "sucesso",
+            });
+
         }
-    
+
         catch (erro) {
-        
-            alert(
-                erro.response?.data?.detail ||
-                "Não foi possível atualizar seus dados."
-            );
-        
+
+            setMensagem({
+                texto:
+                    erro.response?.data?.detail ||
+                    erro.message ||
+                    "Não foi possível atualizar seus dados.",
+                tipo: "erro",
+            });
+
         }
-    
+
     }
 
     function sair() {
@@ -342,24 +440,16 @@ export default function Perfil() {
 
     async function excluirConta() {
 
-        const confirmar = window.confirm(
-
-            "Deseja realmente excluir sua conta?\n\n" +
-            "Todos os seus cafés e receitas também serão excluídos."
-
-        );
-
-        if (!confirmar) {
-
-            return;
-
-        }
-
         try {
 
             const resposta = await excluirUsuario();
 
-            alert(resposta.mensagem);
+            setMensagem({
+                texto: resposta.mensagem,
+                tipo: "sucesso",
+            });
+
+            setMostrarConfirmacao(false);
 
             logout();
 
@@ -369,13 +459,14 @@ export default function Perfil() {
 
         catch (erro) {
 
-            alert(
-
-                erro.response?.data?.detail ||
-
-                "Não foi possível excluir sua conta."
-
-            );
+            setMostrarConfirmacao(false);
+            
+            setMensagem({
+                texto:
+                    erro.response?.data?.detail ||
+                    "Não foi possível excluir sua conta.",
+                tipo: "erro",
+            });
 
         }
 
@@ -386,6 +477,12 @@ export default function Perfil() {
         <div>
 
             <h1>Perfil</h1>
+
+            <Mensagem
+                mensagem={mensagem?.texto}
+                tipo={mensagem?.tipo}
+                onClose={() => setMensagem(null)}
+            />
 
             {!isAuthenticated ? (
 
@@ -493,9 +590,10 @@ export default function Perfil() {
 
                     <button
                         type="button"
-                        onClick={() =>
-                            setModoCadastro(!modoCadastro)
-                        }
+                        onClick={() => {
+                            setMensagem(null);
+                            setModoCadastro(!modoCadastro);
+                        }}
                     >
 
                         {modoCadastro
@@ -524,14 +622,17 @@ export default function Perfil() {
 
                     {modoEdicao ? (
 
-                        <form onSubmit={salvarDados}>
-                        
+                        <form 
+                            onSubmit={salvarDados}
+                            noValidate
+                        >
+
                             <label>
-                                        
+
                                 Nome
-                                        
+
                                 <br />
-                                        
+
                                 <input
                                     type="text"
                                     value={nomeEdicao}
@@ -539,17 +640,17 @@ export default function Perfil() {
                                         setNomeEdicao(e.target.value)
                                     }
                                 />
-                    
+
                             </label>
-                                
+
                             <br /><br />
-                                
+
                             <label>
-                                
+
                                 E-mail
-                                
+
                                 <br />
-                                
+
                                 <input
                                     type="email"
                                     value={emailEdicao}
@@ -557,41 +658,41 @@ export default function Perfil() {
                                         setEmailEdicao(e.target.value)
                                     }
                                 />
-                    
+
                             </label>
-                                
+
                             <br /><br />
-                                
+
                             <button
                                 type="submit"
                                 style={{ marginRight: "10px" }}
                             >
-                            
+
                                 Salvar
-                                
+
                             </button>
-                                
+
                             <button
                                 type="button"
                                 onClick={cancelarEdicao}
                             >
-                            
+
                                 Cancelar
-                                
+
                             </button>
-                                
+
                         </form>
-                    
+
                     ) : modoAlterarSenha ? (
-                    
+
                         <form onSubmit={salvarAlteracaoSenha}>
-                        
+
                             <label>
-                    
+
                                 Senha atual
-                    
+
                                 <br />
-                    
+
                                 <input
                                     type="password"
                                     value={senhaAtual}
@@ -599,17 +700,17 @@ export default function Perfil() {
                                         setSenhaAtual(e.target.value)
                                     }
                                 />
-                    
+
                             </label>
-                                
+
                             <br /><br />
-                                
+
                             <label>
-                                
+
                                 Nova senha
-                                
+
                                 <br />
-                                
+
                                 <input
                                     type="password"
                                     value={novaSenha}
@@ -617,17 +718,17 @@ export default function Perfil() {
                                         setNovaSenha(e.target.value)
                                     }
                                 />
-                    
+
                             </label>
-                                
+
                             <br /><br />
-                                
+
                             <label>
-                                
+
                                 Confirmar nova senha
-                                
+
                                 <br />
-                                
+
                                 <input
                                     type="password"
                                     value={confirmarNovaSenha}
@@ -635,55 +736,55 @@ export default function Perfil() {
                                         setConfirmarNovaSenha(e.target.value)
                                     }
                                 />
-                    
+
                             </label>
-                                
+
                             <br /><br />
-                                
+
                             <button
                                 type="submit"
                                 style={{ marginRight: "10px" }}
                             >
-                            
+
                                 Alterar senha
-                                
+
                             </button>
-                                
+
                             <button
                                 type="button"
                                 onClick={cancelarAlterarSenha}
                             >
-                            
+
                                 Cancelar
-                                
+
                             </button>
-                                
+
                         </form>
-                    
+
                     ) : (
-                    
+
                         <>
-                    
+
                             <p>
-                    
+
                                 <strong>Nome:</strong> {usuario?.nome}
-                    
+
                             </p>
-                    
+
                             <p>
-                    
+
                                 <strong>Email:</strong> {usuario?.email}
-                    
+
                             </p>
-                    
+
                             <p>
-                    
+
                                 <strong>Perfil:</strong> {getRoleLabel(usuario?.role)}
-                    
+
                             </p>
-                    
+
                         </>
-                    
+
                     )}
 
                     <br /><hr /><br />
@@ -700,7 +801,8 @@ export default function Perfil() {
 
                     </button>
 
-                    <button onClick={excluirConta} style={{ marginRight: "10px" }}>
+                    <button onClick={() => setMostrarConfirmacao(true)} 
+                        style={{ marginRight: "10px" }}>
 
                         Excluir conta
 
@@ -719,6 +821,25 @@ export default function Perfil() {
                     </button>
 
                 </>
+
+            )}
+
+            {mostrarConfirmacao && (
+
+                <Confirmacao
+
+                    titulo="Confirmar exclusão da conta"
+
+                    mensagem={
+                        "Deseja realmente excluir sua conta?\n\n" +
+                        "Todos os seus cafés e receitas também serão excluídos."
+                    }
+
+                    onConfirm={excluirConta}
+
+                    onCancel={() => setMostrarConfirmacao(false)}
+
+                />
 
             )}
 

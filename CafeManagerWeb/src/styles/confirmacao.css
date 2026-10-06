@@ -1,0 +1,51 @@
+.confirmacao-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: rgba(0, 0, 0, 0.45);
+
+    z-index: 1000;
+
+}
+
+.confirmacao {
+
+    min-width: 320px;
+
+    max-width: 500px;
+
+}
+
+.confirmacao h2 {
+
+    margin-top: 0;
+
+}
+
+.confirmacao p {
+
+    white-space: pre-line;
+
+    line-height: 1.5;
+
+}
+
+.confirmacao-acoes {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 24px;
+
+}

@@ -1,6 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { deletarCafe } from "../services/cafe-service";
 import IconButton from "./ui/icon-button";
+import { useState } from "react";
+import Mensagem from "./mensagem";
+import Confirmacao from "./ui/confirmacao";
 
 function CafeRow({
 
@@ -9,7 +12,11 @@ function CafeRow({
 
 }) {
 
+    const [mensagem, setMensagem] = useState(null);
+
     const navigate = useNavigate();
+
+    const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
 
     function editarCafe() {
 
@@ -19,21 +26,11 @@ function CafeRow({
 
     async function excluirCafe() {
 
-        const confirmar = window.confirm(
-
-            `Deseja excluir "${cafe.nome_cafe}"?`
-
-        );
-
-        if (!confirmar) {
-
-            return;
-
-        }
-
         try {
 
             await deletarCafe(cafe.id);
+
+            setMostrarConfirmacao(false);
 
             onDelete();
 
@@ -43,7 +40,15 @@ function CafeRow({
 
             console.error(erro);
 
-            alert("Erro ao excluir café.");
+            setMostrarConfirmacao(false);
+
+            setMensagem({
+                texto:
+                    erro.response?.data?.detail ||
+                    erro.message ||
+                    "Erro ao excluir café.",
+                tipo: "erro",
+            });
 
         }
 
@@ -61,50 +66,76 @@ function CafeRow({
 
         event.stopPropagation();
 
-        excluirCafe();
+        setMostrarConfirmacao(true);
 
     }
 
     return (
 
-        <tr
-            onClick={editarCafe}
-            style={{ cursor: "pointer" }}
-        >
+        <>
 
-            <td>{cafe.usuario_id}</td>
-            
-            <td>{cafe.id}</td>
+            <tr
+                onClick={editarCafe}
+                style={{ cursor: "pointer" }}
+            >
 
-            <td>{cafe.empresa}</td>
+                <td>{cafe.usuario_id}</td>
+                
+                <td>{cafe.id}</td>
 
-            <td>{cafe.nome_cafe}</td>
+                <td>{cafe.empresa}</td>
 
-            <td>{cafe.pontuacao ?? "-"}</td>
+                <td>{cafe.nome_cafe}</td>
 
-            <td>
+                <td>{cafe.pontuacao ?? "-"}</td>
 
-                <IconButton
-                    title="Editar café"
-                    onClick={clicarEditar}
-                >
+                <td>
 
-                    Editar
+                    <Mensagem 
+                        mensagem={mensagem?.texto}
+                        tipo={mensagem?.tipo}
+                        onClose={() => setMensagem(null)} 
+                    />
+                    
+                    <IconButton
+                        title="Editar café"
+                        onClick={clicarEditar}
+                    >
 
-                </IconButton>
+                        Editar
 
-                <IconButton
-                    title="Excluir café"
-                    onClick={clicarExcluir}
-                >
+                    </IconButton>
 
-                    Excluir
+                    <IconButton
+                        title="Excluir café"
+                        onClick={clicarExcluir}
+                    >
 
-                </IconButton>
+                        Excluir
 
-            </td>
+                    </IconButton>
 
-        </tr>
+                </td>
+
+            </tr>
+
+            {mostrarConfirmacao && (
+
+                <Confirmacao
+
+                    titulo="Confirmar exclusão"
+
+                    mensagem={`Deseja excluir "${cafe.nome_cafe}"?`}
+
+                    onConfirm={excluirCafe}
+
+                    onCancel={() => setMostrarConfirmacao(false)}
+
+                />
+
+            )}
+
+        </>
 
     );
 
