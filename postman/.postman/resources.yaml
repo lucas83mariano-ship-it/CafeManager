@@ -1,0 +1,13 @@
+workspace:
+  id: b4b914ce-6db3-4789-8400-26b93cb315ea
+localResources:
+  collections:
+    - ../postman/collections/Projeto_Café.postman.collection.json
+  environments:
+    - ../postman/environments/CafeManager_CI.postman.environment.json
+    - ../CafeManager Local.postman_environment.json
+cloudResources:
+  collections:
+    ../postman/collections/Projeto_Café.postman.collection.json: 56034991-b13791fc-0e8e-450d-8e89-ffef75c3a898
+  environments:
+    ../postman/environments/CafeManager_CI.postman.environment.json: 56034991-ae0f7289-abf0-48c3-b09a-3a753b0ff649
