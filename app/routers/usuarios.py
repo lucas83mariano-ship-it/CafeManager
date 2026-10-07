@@ -395,3 +395,31 @@ def excluir_usuario_por_id(
             "Todos os cafés e receitas cadastrados também foram excluídos."
         )
     }
+
+@router.delete("/email/{email}")
+def excluir_usuario_por_email(
+    email: str,
+    db: Session = Depends(get_db),
+    _admin: UsuarioDB = Depends(get_current_admin),
+):
+    usuario = (
+        db.query(UsuarioDB)
+        .filter(UsuarioDB.email == email)
+        .first()
+    )
+
+    if not usuario:
+        raise HTTPException(
+            status_code=404,
+            detail="Usuário não encontrado.",
+        )
+
+    db.delete(usuario)
+    db.commit()
+
+    return {
+        "mensagem": (
+            "Usuário removido com sucesso. "
+            "Todos os cafés e receitas cadastrados também foram excluídos."
+        )
+    }
