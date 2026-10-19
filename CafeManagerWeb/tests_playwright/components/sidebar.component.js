@@ -64,6 +64,7 @@ export class SidebarComponent{
 
     // Validações
     async sidebarInicial() {
+        await expect(this.tituloSidebar).toBeVisible();
         await expect(this.menuCalculadora).toBeVisible();
         await expect(this.menuCafes).not.toBeVisible();
         await expect(this.menuReceitas).not.toBeVisible();

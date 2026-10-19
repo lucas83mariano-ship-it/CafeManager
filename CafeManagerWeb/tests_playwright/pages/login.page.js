@@ -1,5 +1,6 @@
 import { expect, request } from '@playwright/test';
 import { HeaderComponent } from '../components/header.component';
+import { listaUsuarios } from '../fixture/usuarios'
 
 export class LoginPage {
 
@@ -7,7 +8,7 @@ export class LoginPage {
         this.page = page;
         this.request = request;
         this.headerComponent = new HeaderComponent(page);
-        this.usuarioAdmin = {
+        /* this.usuarioAdmin = {
            nome: 'Admin',
            email: 'admin@admin.com',
            senha: 'AdminUsu123*'
@@ -48,7 +49,7 @@ export class LoginPage {
                 email: 'monicamendonca66@gmail.com',
                 senha: 'Admin2*'
             }
-        ]
+        ] */
     }
 
     // Objetos
@@ -96,7 +97,7 @@ export class LoginPage {
     }
     
     async login2(meuUsuario) {
-        const resultado = this.listaUsuarios.filter(usuario => usuario.email === meuUsuario)
+        const resultado = listaUsuarios.filter(usuario => usuario.nome === meuUsuario)
         await this.campoEmail.fill(resultado[0].email);
         await this.campoSenha.fill(resultado[0].senha);
         await this.clicarEntrar();
@@ -121,6 +122,16 @@ export class LoginPage {
     async acaoCompletaLogout(){
         await this.headerComponent.irParaPerfil();
         await this.fazerLogout();
+    }
+
+    // Popup de mensagem
+
+    get msgErroLogin() {
+        return this.page.locator('.card p')
+    }
+
+    get erroBotaoOk() {
+        return this.page.locator('.card button').getByText('OK')
     }
 
     // Faz login na API, realiza um get no endpoint '/cafes' e armazena a quantidade de cafés recebidos na resposta em json.

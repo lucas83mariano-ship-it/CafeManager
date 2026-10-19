@@ -1,16 +1,17 @@
-import { test, expect, request } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { CalculadoraPage } from './pages/calculadora.page';
 import { SidebarComponent } from './components/sidebar.component';
-import { CafePage } from './pages/cafes.page';
 import { HeaderComponent } from './components/header.component';
 import { LoginPage } from './pages/login.page';
 import { PerfilComponent } from './components/perfil.component';
 import { PerfilPage } from './pages/perfil.page';
-import { TIMEOUT } from 'node:dns';
+import { PreparaAmbiente } from './api/preparacao.api';
+import { ApiLogin } from './api/login.api'
+import { ApiDelete } from './api/delete.api';
 
-test ('Validar exibição dos campos de login', async ({ page }) => {
+test('Validar exibição dos campos de login', async ({ page }) => {
     // Validar a exibição dos campos de login (e-mail, senha, entrar) após clicar em Entrar
-    
+
     // Preparação
     const headerComponent = new HeaderComponent(page);
     const loginPage = new LoginPage(page);
@@ -33,9 +34,9 @@ test ('Validar exibição dos campos de login', async ({ page }) => {
     await expect(perfilComponent.botaoVoltar).toBeVisible();
 });
 
-test ('Validar login com sucesso com usuário Admin', async ({ page }) => {
+test('Validar login com sucesso com usuário Admin', async ({ page }) => {
     // Validar que após realizar login com usuário que possui role='admin', serão exibidos os menus de Cafés, Receitas, Calculadora, Usuários. A tela ainda deve ser da Calculadora.
-    
+
     // Preparação
     const sidebar = new SidebarComponent(page);
     const calculadoraPage = new CalculadoraPage(page);
@@ -52,7 +53,7 @@ test ('Validar login com sucesso com usuário Admin', async ({ page }) => {
     // Ação
     await headerComponent.irParaPerfil();
     await loginPage.login(usuario[0]);
-   
+
     // Validação
     await sidebar.loginExibeTodosMenus();
     await expect(headerComponent.tituloHeader).toBeVisible();
@@ -62,7 +63,7 @@ test ('Validar login com sucesso com usuário Admin', async ({ page }) => {
     await expect(perfilPage.dadosPerfil).toContainText('Administrador');
 });
 
-test ('Validar login com sucesso com usuário User', async ({ page }) => {
+test('Validar login com sucesso com usuário User', async ({ page }) => {
     // Validar que após realizar login com usuário que possui role='user', serão exibidos os menus de Cafés, Receitas e Calculadora. A tela ainda deve ser Calculadora
 
     //Preparação
@@ -74,7 +75,7 @@ test ('Validar login com sucesso com usuário User', async ({ page }) => {
     const perfilPage = new PerfilPage(page);
     const usuario = loginPage.listaUsuarios.filter(usuario => usuario.nome === 'Mônica');
 
-    await page.goto ('/');
+    await page.goto('/');
 
     // Ação
     await headerComponent.irParaPerfil();
@@ -88,7 +89,7 @@ test ('Validar login com sucesso com usuário User', async ({ page }) => {
     await expect(perfilPage.dadosPerfil).toContainText('Amante de Café');
 });
 
-test ('Validar logout do Admin com sucesso', async ({ page }) => {
+test('Validar logout do Admin com sucesso', async ({ page }) => {
     // Validar que após realizar logout de usuário com role='admin', serão ocultados os menus de Cafés, Receitas e Usuários, o usuário será redirecionado para a tela de Calculadora, e no header o link de perfil deverá exibir a palavra Perfil.
 
     // Preparação
@@ -118,7 +119,7 @@ test ('Validar logout do Admin com sucesso', async ({ page }) => {
     await expect(headerComponent.linkPerfil).toContainText('Perfil');
 });
 
-test ('Validar logout do User com sucesso', async ({ page }) => {
+test('Validar logout do User com sucesso', async ({ page }) => {
     // Validar que após realizar logout de usuário com role='user', serão ocultados os menus de Cafés e Receitas, o usuário será redirecionado para a tela de Calculadora, e no header o link de perfil deverá exibir a palavra Perfil.
 
     //Preparação
@@ -148,7 +149,7 @@ test ('Validar logout do User com sucesso', async ({ page }) => {
     await expect(headerComponent.linkPerfil).toContainText('Perfil');
 });
 
-test ('Validar login com sucesso com todos os usuários', async ({ page }) => {
+test('Validar login com sucesso com todos os usuários', async ({ page }) => {
     // Validar que o login será feito com sucessos para todos os usuários da lista.
 
     const calculadoraPage = new CalculadoraPage(page);
@@ -170,21 +171,21 @@ test ('Validar login com sucesso com todos os usuários', async ({ page }) => {
             await sidebarComponent.loginExibeTodosMenus();
             await loginPage.acaoCompletaLogout();
         }
-            else {
-                await perfilPage.perfilEBotoes.screenshot({ path: `cafemanagerweb/screenshots/screenshot_${usuario.nome}.png`, fullPage: true });
-                await sidebarComponent.loginMenusUser();
-                await loginPage.acaoCompletaLogout();
-            }
+        else {
+            await perfilPage.perfilEBotoes.screenshot({ path: `cafemanagerweb/screenshots/screenshot_${usuario.nome}.png`, fullPage: true });
+            await sidebarComponent.loginMenusUser();
+            await loginPage.acaoCompletaLogout();
+        }
     }
 });
 
-test ('Validar mensagem de login incorreto com email e senha inválidos', async ({page})=> {
+test('Validar mensagem de login incorreto com email e senha inválidos', async ({ page }) => {
     // Validar que será exibido a mensagem "Email ou senha inválidos" ao digitar email e senha incorretos.
 
     // Preparação
     const headerComponent = new HeaderComponent(page);
     const loginPage = new LoginPage(page);
-    
+
     // Ação
     await page.goto('/');
     await headerComponent.irParaPerfil();
@@ -201,7 +202,7 @@ test ('Validar mensagem de login incorreto com email e senha inválidos', async 
     await dialog.dismiss();
 });
 
-test ('Validar mensagem de login incorreto com email ou senha inválidos', async ({ page }) => {
+test('Validar mensagem de login incorreto com email ou senha inválidos', async ({ page }) => {
     // Validar que será exibido a mensagem "Email ou senha inválidos" ao digitar email ou senha incorretos no login.
 
     // Preparação
@@ -213,7 +214,7 @@ test ('Validar mensagem de login incorreto com email ou senha inválidos', async
     await headerComponent.irParaPerfil();
     await loginPage.campoEmail.fill(loginPage.listaUsuarios[0].email);
     await loginPage.campoSenha.fill(loginPage.listaUsuarios[1].senha);
-    
+
     await expect(loginPage.botaoEntrar).toBeVisible();
     await expect(loginPage.botaoEntrar).toBeEnabled();
     const dialogPromise = loginPage.page.waitForEvent('dialog');
@@ -230,7 +231,7 @@ test ('Validar mensagem de login incorreto com email ou senha inválidos', async
     await dialog.dismiss();
 });
 
-test ('Validar mensagem de login incorreto com email e senha em branco', async ({page})=> {
+test('Validar mensagem de login incorreto com email e senha em branco', async ({ page }) => {
     // Validar que será exibido a mensagem "Email ou senha inválidos" ao preencher apenas email e senha e clicar em entrar.
 
     // Preparação
@@ -250,7 +251,7 @@ test ('Validar mensagem de login incorreto com email e senha em branco', async (
     await dialog.dismiss();
 });
 
-test ('Validar mensagem de login incorreto com email ou senha em branco', async ({page})=> {
+test('Validar mensagem de login incorreto com email ou senha em branco', async ({ page }) => {
     // Validar que será exibido a mensagem "Email ou senha inválidos" ao preencher apenas email ou senha e clicar em entrar.
 
     // Preparação
@@ -261,12 +262,44 @@ test ('Validar mensagem de login incorreto com email ou senha em branco', async 
     await page.goto('/');
     await headerComponent.irParaPerfil();
     await loginPage.campoEmail.fill(loginPage.usuarioAdmin.email);
-    const dialogPromise = loginPage.page.waitForEvent('dialog');
     await loginPage.clicarEntrar();
 
     // Validação
-    const dialog = await dialogPromise;
-    expect(dialog.type()).toBe('alert');
-    expect(dialog.message()).toBe('Email ou senha inválidos.');
-    await dialog.dismiss();
+    await expect(loginPage.msgErroLogin).toContainText('Email ou senha inválidos.');
+    await loginPage.erroBotaoOk.click();
 });
+
+test('Login, delete usu, cadastra usu, via API', async ({ page, request }) => {
+    const preparaAmbiente = new PreparaAmbiente(request);
+    const headerComponent = new HeaderComponent(page);
+    const loginPage = new LoginPage(page);
+    const calculadoraPage = new CalculadoraPage(page);
+    const sidebarComponent = new SidebarComponent(page);
+    const apiLogin = new ApiLogin(request);
+    const apiDelete = new ApiDelete(request);
+
+    await preparaAmbiente.prepararUsuarioTeste();
+    //await preparaAmbiente.cadastrarUsuario();
+    await page.goto('/')
+    await headerComponent.irParaPerfil();
+    await loginPage.login2('Testador');
+    await sidebarComponent.loginMenusUser();
+    await calculadoraPage.calculadoraEstadoInicial();
+});
+
+
+
+/* Exemplo de mock para validar o Else do método deletarUsuario
+
+test('Aplicando mock 500', async ({ request }) => {
+    const respostaFalsa = {
+        status: () => 500,
+        json: async () => ({ detail: '...' })
+    };
+    const requestFalso = {
+        delete: async() => respostaFalsa
+    }
+    const apiDelete = new ApiDelete(requestFalso);
+    await expect(apiDelete.deletarUsuario('Testador', 'fake')).rejects.toThrow('500 Erro inesperado')
+}) 
+*/

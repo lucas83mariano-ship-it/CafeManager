@@ -3,7 +3,29 @@ import { expect } from '@playwright/test';
 export class CalculadoraPage {
 
     constructor(page) {
-        this.page = page;
+        this.page = page;       
+        this.listaCenarios = [
+            {
+                cenário: 'água',
+                valor: '465',
+                campo: this.campoAgua
+            },
+            {
+                cenário: 'café',
+                valor: '31',
+                campo: this.campoCafe
+            },
+            {
+                cenário: 'proporção',
+                valor: '15',
+                campo: this.campoProporcao
+            },
+            {
+                cenário: 'todos',
+                valor: ['465', '31', '15'],
+                campo: [this.campoAgua, this.campoCafe, this.campoProporcao]
+            }
+        ]
     }
 
     
@@ -104,7 +126,7 @@ export class CalculadoraPage {
     }
 
     // Validações
-    async calculadoraInicial() {
+    async calculadoraEstadoInicial() {
         await expect(this.titulo).toBeVisible();
         await expect(this.campoAgua).toBeVisible();
         await expect(this.campoAgua).toBeEmpty();
@@ -116,5 +138,13 @@ export class CalculadoraPage {
         await expect(this.botaoCalcular).toBeDisabled();
     }
 
+    // Ações
+    async resetarCalculadora() {
+        await this.botaoReiniciar.click();
+    }
+
+    async realizarCalculo() {
+        await this.botaoCalcular.click();
+    }
 }
 
