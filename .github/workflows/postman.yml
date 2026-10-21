@@ -58,5 +58,5 @@ jobs:
 
       - name: Executar testes da API
         run: |
-          newman run "postman/Projeto_Café.postman_collection.json" \
-          -e "postman/CafeManager CI.postman_environment.json"
+          newman run "postman/Projeto_Café.postman.collection.json" \
+          -e "postman/CafeManager_CI.postman.environment.json"
