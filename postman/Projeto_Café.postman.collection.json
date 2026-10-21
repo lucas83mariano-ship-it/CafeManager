@@ -385,6 +385,40 @@
           "name": "06.01_Login de Usuários",
           "item": [
             {
+              "name": "06.01.00_Login Usuário Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();\r\n\r\npm.test(\"Status code is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Guardando token do usuário\", function () {\r\n    pm.environment.set(\"tokenUsuAdmin\", response.access_token);\r\n});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"nome\": \"{{UsuAdmin}}\",\r\n    \"email\": \"{{EmailAdmin}}\",\r\n    \"senha\": \"{{SenhaAdmin}}\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{minhaUrl}}login",
+                  "host": [
+                    "{{minhaUrl}}login"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
               "name": "06.01.01_Meus Cafés Login Válido - Lucas",
               "event": [
                 {
