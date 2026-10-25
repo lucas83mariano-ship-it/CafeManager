@@ -1,5 +1,5 @@
 import { endpointsApi } from "./endpoints.api";
-import { listaUsuarios } from "../fixture/usuarios";
+import { listaUsuarios } from "../fixture/dados/usuarios.data";
 import { expect } from '@playwright/test';
 
 export class ApiLogin {
@@ -17,7 +17,6 @@ export class ApiLogin {
             }
         })
         expect(loginApi.status()).toBe(200);
-        console.log(loginApi.status())
         const tokenJson = await loginApi.json();
         const token = tokenJson.access_token;
         return(token)

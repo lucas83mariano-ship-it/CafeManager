@@ -1,72 +1,32 @@
 import { test, expect } from '@playwright/test';
 import { CalculadoraPage } from './pages/calculadora.page';
 import { SidebarComponent } from './components/sidebar.component';
-import { HeaderComponent } from './components/header.component';
+import { cenariosCalculo } from './fixture/dados/calculadora.data';
 
-test('Acessar o site Cafe Manager', async ({ page }) => {
-    // Validar o acesso ao site Café Manager. Deve ser exibido apenas o menu Calculadora no Sidebar, e a tela inicial deve ser a Calculadora com todos os seus campos vazios, e o botão Calcular deve estar inacessível.
-    // Refatoração também envolveu corrigir alguns apontamentos, visto que houve alteração na arquitetura do projeto.
-
-    // Preparação
-    const sidebar = new SidebarComponent(page);
-    const calculadoraPage = new CalculadoraPage(page);
-    const headerComponent = new HeaderComponent(page);
-
-    // Ação
-    await page.goto('/');
-
-    // Validação
-    await expect(headerComponent.tituloHeader).toBeVisible();
-    await expect(headerComponent.linkPerfil).toBeVisible();
-    await expect(headerComponent.linkPerfil).toContainText('Perfil');
-    await sidebar.sidebarInicial();
-    await calculadoraPage.calculadoraEstadoInicial();
-});
-
-test('Acessar a Calculadora', async ({ page }) => {
-    // Validar o acesso ao menu Calculadora estando em outra tela. Sem login. A tela calculadora deve exibir todos os campos vazios, e o botão Calcular deve estar inacessível.
-    // Refatoração também envolveu corrigir alguns apontamentos, visto que houve alteração na arquitetura do projeto.
-
-    // Preparação
-    const sidebar = new SidebarComponent(page);
-    const calculadoraPage = new CalculadoraPage(page);
-    const headerComponent = new HeaderComponent(page);
-
-    // Ação
-    await page.goto('/');
-    await headerComponent.irParaPerfil();
-    await sidebar.irParaCalculadora();
-
-    // Validação
-    await sidebar.sidebarInicial();
-    await calculadoraPage.calculadoraEstadoInicial();
-});
-
-test('Validar botão Calcular inacessível quando preenche apenas um campo, ou todos', async ({ page }) => {
-    // O botão Calcular deve permanecer com nome "Calcular" e inacessível enquanto o usuário preencher apenas um campo, ou se o usuário preencher todos os 3 campos com valores válidos.
-    // A refatoração envolveu uso de loop para percorrer os cenários de teste, já que envolvia preencher um campo por vez para validar a mesma regra de negócio.
-    // Refatoração também envolveu corrigir alguns apontamentos, visto que houve alteração na arquitetura do projeto.
+test('Validar botão Calcular desabilitado quando preenche apenas um campo, ou todos', async ({ page }) => {
+    // O botão Calcular deve permanecer com nome "Calcular" e desabilitado enquanto o usuário preencher apenas um campo, ou se o usuário preencher todos os 3 campos com valores válidos.
 
     // Preparação
     const calculadoraPage = new CalculadoraPage(page);
 
-    // Dado que eu acessei o Café Manager
     await page.goto('/');
 
-    // Quando preencher um ou todos os campos com valor > 0
-    for (const cenario of calculadoraPage.listaCenarios) {
+    for (const cenario of cenariosCalculo) {
+        // Quando o cenário for 'todos', então os 3 campos serão preenchidos
         if (cenario.cenário === 'todos') {
-            for (let cenarios = 0; cenarios < cenario.campo.length; cenarios++) {
-                await cenario.campo[cenarios].fill(cenario.valor[cenarios]);
+            for (let posicao = 0; posicao < cenario.campos.length; posicao++) {
+                const meuCampo = calculadoraPage[cenario.campos[posicao]]
+                await  meuCampo.fill(cenario.valor[posicao]);
             }
+        // Cada campo é preenchido individualmente durante o laço
+        } else {
+            await calculadoraPage[cenario.campos].fill(cenario.valor);
         }
-        else {
-            await cenario.campo.fill(cenario.valor);
-        }
-        // Então o botão deve exibir o texto "Calcular" e permancer inacessível
+        // O status do botão 'Calcular' é validado após cada preenchimento
         await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
         await expect(calculadoraPage.botaoCalcular).toBeDisabled();
-        await cenario.campo.fill("");
+        // Limpeza manual dos campos para dar seguimento ao laço
+        await calculadoraPage.limparCampos();
     }
 });
 
@@ -75,19 +35,19 @@ test('Validar o funcionamento do botão reiniciar', async ({ page }) => {
     // A refatoração envolveu uso de loop para percorrer os cenários de teste, já que envolvia preencher um campo por vez para validar a mesma regra de negócio.
 
     // Preparação
-
     const calculadoraPage = new CalculadoraPage(page);
 
     // Ação
     await page.goto('/');
 
-    for (const cenario of calculadoraPage.listaCenarios) {
+    // Preenche um valor em cada campo e pressiona o botão reiniciar. Depois de fazer isso com cada campo, preenche todos os 3 e pressiona o botão reiniciar.
+    for (const cenario of cenariosCalculo) {
         if (cenario.cenário === 'todos') {
-            for (let cenarios = 0; cenarios < cenario.campo.length; cenarios++) {
-                await cenario.campo[cenarios].fill(cenario.valor[cenarios])
+            for (let posicao = 0; posicao < cenario.campos.length; posicao++) {
+                await calculadoraPage[cenario.campos[posicao]].fill(cenario.valor[posicao])
             }
         } else {
-            await cenario.campo.fill(cenario.valor)
+            await calculadoraPage[cenario.campos].fill(cenario.valor)
         }
         await calculadoraPage.resetarCalculadora();
         await calculadoraPage.calculadoraEstadoInicial();

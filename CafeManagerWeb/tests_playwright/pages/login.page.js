@@ -1,6 +1,6 @@
 import { expect, request } from '@playwright/test';
 import { HeaderComponent } from '../components/header.component';
-import { listaUsuarios } from '../fixture/usuarios'
+import { listaUsuarios } from '../fixture/dados/usuarios.data'
 
 export class LoginPage {
 

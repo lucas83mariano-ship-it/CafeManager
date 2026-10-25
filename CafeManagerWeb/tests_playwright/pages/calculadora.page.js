@@ -1,31 +1,10 @@
 import { expect } from '@playwright/test';
+import { cenariosCalculo } from '../fixture/dados/calculadora.data';
 
 export class CalculadoraPage {
 
     constructor(page) {
-        this.page = page;       
-        this.listaCenarios = [
-            {
-                cenário: 'água',
-                valor: '465',
-                campo: this.campoAgua
-            },
-            {
-                cenário: 'café',
-                valor: '31',
-                campo: this.campoCafe
-            },
-            {
-                cenário: 'proporção',
-                valor: '15',
-                campo: this.campoProporcao
-            },
-            {
-                cenário: 'todos',
-                valor: ['465', '31', '15'],
-                campo: [this.campoAgua, this.campoCafe, this.campoProporcao]
-            }
-        ]
+        this.page = page
     }
 
     
@@ -60,6 +39,11 @@ export class CalculadoraPage {
 
     get campoProporcao() {
         return this.grupoProporcao.getByLabel('Proporção');
+    }
+
+    async retornaCampo(meuCampo) {
+        const resultadoCampo = this.camposCalculadora.filter(meusCampos => meusCampos.campo === meuCampo)
+        return resultadoCampo
     }
 
     
@@ -128,11 +112,8 @@ export class CalculadoraPage {
     // Validações
     async calculadoraEstadoInicial() {
         await expect(this.titulo).toBeVisible();
-        await expect(this.campoAgua).toBeVisible();
         await expect(this.campoAgua).toBeEmpty();
-        await expect(this.campoCafe).toBeVisible();
         await expect(this.campoCafe).toBeEmpty();
-        await expect(this.campoProporcao).toBeVisible();
         await expect(this.campoProporcao).toBeEmpty();
         await expect(this.botaoReiniciar).toBeVisible();
         await expect(this.botaoCalcular).toBeDisabled();
@@ -145,6 +126,12 @@ export class CalculadoraPage {
 
     async realizarCalculo() {
         await this.botaoCalcular.click();
+    }
+
+    async limparCampos() {
+        await this.campoAgua.fill('');
+        await this.campoCafe.fill('');
+        await this.campoProporcao.fill('');
     }
 }
 

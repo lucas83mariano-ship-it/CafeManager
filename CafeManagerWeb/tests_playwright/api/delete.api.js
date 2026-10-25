@@ -1,5 +1,5 @@
 import { endpointsApi } from "./endpoints.api";
-import { listaUsuarios } from "../fixture/usuarios";
+import { listaUsuarios } from "../fixture/dados/usuarios.data";
 import { expect } from '@playwright/test';
 
 export class ApiDelete {
@@ -40,3 +40,18 @@ export class ApiDelete {
         }
     }
 }
+
+/* Exemplo de mock para validar o Else do método deletarUsuario
+
+test('Aplicando mock 500', async ({ request }) => {
+    const respostaFalsa = {
+        status: () => 500,
+        json: async () => ({ detail: '...' })
+    };
+    const requestFalso = {
+        delete: async() => respostaFalsa
+    }
+    const apiDelete = new ApiDelete(requestFalso);
+    await expect(apiDelete.deletarUsuario('Testador', 'fake')).rejects.toThrow('500 Erro inesperado')
+}) 
+*/

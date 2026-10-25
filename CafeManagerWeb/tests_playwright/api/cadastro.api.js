@@ -1,5 +1,5 @@
 import { endpointsApi } from "./endpoints.api";
-import { listaUsuarios } from "../fixture/usuarios";
+import { listaUsuarios } from "../fixture/dados/usuarios.data";
 import { expect } from '@playwright/test';
 
 export class ApiCadastra {

@@ -9,6 +9,8 @@ import { PreparaAmbiente } from './api/preparacao.api';
 import { ApiLogin } from './api/login.api'
 import { ApiDelete } from './api/delete.api';
 
+
+
 test('Validar exibição dos campos de login', async ({ page }) => {
     // Validar a exibição dos campos de login (e-mail, senha, entrar) após clicar em Entrar
 
@@ -275,8 +277,6 @@ test('Login, delete usu, cadastra usu, via API', async ({ page, request }) => {
     const loginPage = new LoginPage(page);
     const calculadoraPage = new CalculadoraPage(page);
     const sidebarComponent = new SidebarComponent(page);
-    const apiLogin = new ApiLogin(request);
-    const apiDelete = new ApiDelete(request);
 
     await preparaAmbiente.prepararUsuarioTeste();
     //await preparaAmbiente.cadastrarUsuario();
@@ -286,20 +286,3 @@ test('Login, delete usu, cadastra usu, via API', async ({ page, request }) => {
     await sidebarComponent.loginMenusUser();
     await calculadoraPage.calculadoraEstadoInicial();
 });
-
-
-
-/* Exemplo de mock para validar o Else do método deletarUsuario
-
-test('Aplicando mock 500', async ({ request }) => {
-    const respostaFalsa = {
-        status: () => 500,
-        json: async () => ({ detail: '...' })
-    };
-    const requestFalso = {
-        delete: async() => respostaFalsa
-    }
-    const apiDelete = new ApiDelete(requestFalso);
-    await expect(apiDelete.deletarUsuario('Testador', 'fake')).rejects.toThrow('500 Erro inesperado')
-}) 
-*/
