@@ -49,135 +49,113 @@ test('Validar o funcionamento do botão reiniciar', async ({ page }) => {
         } else {
             await calculadoraPage[cenario.campos].fill(cenario.valor)
         }
-        await calculadoraPage.resetarCalculadora();
-        await calculadoraPage.calculadoraEstadoInicial();
+        await calculadoraPage.reiniciarCalculadora();
+        await calculadoraPage.validarCalcEstadoInicial();
     }
 });
 
 test('Validar cálculo automático da Proporção', async ({ page }) => {
-    // Sempre que o usuário preencher dois campos com valores > 0, então o terceiro campo deve exibir a mensagem 'Este valor será calculado automaticamente.' e o botão de calcular deve assumir o nome 'Calcular + nome do campo que receberá o resultado do cálculo'. 
-    // Refatoração também envolveu corrigir alguns apontamentos, visto que houve alteração na arquitetura do projeto.
+    // Sempre que o usuário preencher os campos Água(ml) e Café(g) com valores > 0, então o campo Proporção deve exibir a mensagem 'Este valor será calculado automaticamente.' e o botão de calcular deve assumir o nome 'Calcular Proporção'. O clique no botão Calcular deve realizar o cálculo e o campo Proporção deve exibir o resultado esperado.
 
     //Preparação
     const calculadoraPage = new CalculadoraPage(page);
-
     // Ação
     await page.goto('/');
-    await calculadoraPage.campoAgua.fill('465');
-    await calculadoraPage.campoCafe.fill('31');
+    await calculadoraPage.preencherValoresParaCalculo('campoAgua', 'campoCafe')
+    // Validação
     await expect(calculadoraPage.mensagemProporcao).toHaveText('Este valor será calculado automaticamente.');
     await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular Proporção');
-    await calculadoraPage.realizarCalculo();
-
+    //Ação
+    await calculadoraPage.clicarCalcular();
     // Validação
-    const resultado = await calculadoraPage.campoProporcao.inputValue();
-    expect(Number(resultado)).toBe(15);
+    await calculadoraPage.validarResultadoCalculo('campoProporcao', 15)
     await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
+    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
 });
 
 test('Validar cálculo automático da Água_ml', async ({ page }) => {
-    // Sempre que o usuário preencher dois campos com valores > 0, então o terceiro campo deve exibir a mensagem 'Este valor será calculado automaticamente.' e o botão de calcular deve assumir o nome 'Calcular + nome do campo que receberá o resultado do cálculo'.
-    // Refatoração também envolveu corrigir alguns apontamentos, visto que houve alteração na arquitetura do projeto.
+    // Sempre que o usuário preencher os campos Café(g) e Proporção com valores > 0, então o campo Água(ml) deve exibir a mensagem 'Este valor será calculado automaticamente.' e o botão de calcular deve assumir o nome 'Calcular Água(ml)'. O clique no botão Calcular deve realizar o cálculo e o campo Água(ml) deve exibir o resultado esperado.
 
     // Preparação
     const calculadoraPage = new CalculadoraPage(page);
-
     // Ação
     await page.goto('/');
-    await calculadoraPage.campoCafe.fill('31');
-    await calculadoraPage.campoProporcao.fill('15');
+    await calculadoraPage.preencherValoresParaCalculo('campoCafe', 'campoProporcao')
+    // Validação
     await expect(calculadoraPage.mensagemAgua).toHaveText('Este valor será calculado automaticamente.');
     await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular Água (ml)');
-    await calculadoraPage.realizarCalculo();
-
+    // Ação
+    await calculadoraPage.clicarCalcular();
     // Validação
-    const resultado = await calculadoraPage.campoAgua.inputValue();
-    expect(Number(resultado)).toBe(465);
+    await calculadoraPage.validarResultadoCalculo('campoAgua',465)
     await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
+    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
 });
 
 test('Validar cálculo automático do Café_g', async ({ page }) => {
-    // Sempre que o usuário preencher dois campos com valores > 0, então o terceiro campo deve exibir a mensagem 'Este valor será calculado automaticamente.' e o botão de calcular deve assumir o nome 'Calcular + nome do campo que receberá o resultado do cálculo'.
-    // Refatoração também envolveu corrigir alguns apontamentos, visto que houve alteração na arquitetura do projeto.
+    // Sempre que o usuário preencher os campos Água(ml) e Proporção com valores > 0, então o campo Café(g) deve exibir a mensagem 'Este valor será calculado automaticamente.' e o botão de calcular deve assumir o nome 'Calcular Café(g)'. O clique no botão Calcular deve realizar o cálculo e o campo Café(g) deve exibir o resultado esperado.
 
     // Preparação
     const calculadoraPage = new CalculadoraPage(page);
-
     // Ação
     await page.goto('/');
-    await calculadoraPage.campoAgua.fill('465');
-    await calculadoraPage.campoProporcao.fill('15');
+    await calculadoraPage.preencherValoresParaCalculo('campoAgua', 'campoProporcao')
+    // Validação
     await expect(calculadoraPage.mensagemCafe).toHaveText('Este valor será calculado automaticamente.');
     await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular Café (g)');
-    await calculadoraPage.realizarCalculo();
-
+    // Ação
+    await calculadoraPage.clicarCalcular();
     // Validação
-    const resultado = await calculadoraPage.campoCafe.inputValue();
-    expect(Number(resultado)).toBe(31);
+    await calculadoraPage.validarResultadoCalculo('campoCafe', 31);
     await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
+    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
 });
 
-test('Não deve apagar um valor originalmente calculado após edição manual', async ({ page }) => {
-    // Validar que o sistema não irá apagar um valor que foi originalmente calculado, mas posteriormente editado manualmente pelo usuário.
+test('Validar a limpeza automática do resultado do cálculo', async ({ page }) => {
+    // Validar que após realizar cálculo automático, se o usuário editar um dos 2 valores preenchidos anteriormente então o resultado deve ser apagado automaticamente para receber novo resultado.
 
     // Preparação
-    const sidebar = new SidebarComponent(page);
     const calculadoraPage = new CalculadoraPage(page);
-
-    await page.goto('/');
-    await sidebar.irParaCalculadora();
-
     // Ação
+    await page.goto('/');
     await calculadoraPage.campoAgua.fill('500');
     await calculadoraPage.campoCafe.fill('21');
-
     // Validação
     await expect(calculadoraPage.campoProporcao).toBeEmpty();
     await expect(calculadoraPage.mensagemProporcao).toHaveText('Este valor será calculado automaticamente.');
     await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular Proporção');
-
     // Ação
     await calculadoraPage.botaoCalcular.click();
-
     // Validação
     await expect(calculadoraPage.campoProporcao).toHaveValue('23.8');
-
     // Ação
     await calculadoraPage.campoCafe.fill('30');
-
+    // Validação
+    await expect(calculadoraPage.campoCafe).toHaveValue('30');
+    await expect(calculadoraPage.campoAgua).toHaveValue('500');
+    await expect(calculadoraPage.campoProporcao).toBeEmpty();
+    await expect(calculadoraPage.mensagemProporcao).toHaveText('Este valor será calculado automaticamente.');
+    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular Proporção');
+    // Ação
+    await calculadoraPage.clicarCalcular();
+    // Validação
+    await expect(calculadoraPage.campoProporcao).toHaveValue('16.7');
+    // Ação
+    await calculadoraPage.campoAgua.fill('600');
     // Validação
     await expect(calculadoraPage.campoCafe).toHaveValue('30');
     await expect(calculadoraPage.campoProporcao).toBeEmpty();
     await expect(calculadoraPage.mensagemProporcao).toHaveText('Este valor será calculado automaticamente.');
     await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular Proporção');
-
     // Ação
-    await calculadoraPage.botaoCalcular.click();
-
+    await calculadoraPage.clicarCalcular();
     // Validação
-    await expect(calculadoraPage.campoProporcao).toHaveValue('16.7');
-
-    // Ação
-    await calculadoraPage.campoProporcao.fill('11');
-    await calculadoraPage.campoCafe.fill('');
-
-    // Validação
-    await expect(calculadoraPage.campoProporcao).toHaveValue('11');
-    await expect(calculadoraPage.campoCafe).toBeEmpty();
-    await expect(calculadoraPage.mensagemCafe).toHaveText('Este valor será calculado automaticamente.');
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular Café (g)');
-
-    // Ação
-    await calculadoraPage.botaoCalcular.click();
-
-    // Validação
-    await expect(calculadoraPage.campoCafe).toHaveValue('45.5');
+    await expect(calculadoraPage.campoProporcao).toHaveValue('20.0');
 });
 
 test('Validar destaque de erro e mensagem de erro para valor=0', async ({ page }) => {
-    // Sempre que o usuário digitar valor =0, então os campos deverão receber destaque com contorno em vermelho, e deve ser exibido a mensagem 'Informe um valor maior que zero'.
-    // O botão Calcular deve permanecer inacessível.
-    // Caso o usuário preencha um campo=0 e outro campo>0, então o botão Calcular deve permanecer com esse nome e inacessível, além de não ser exibida a mensagem de cálculo automático no terceiro campo.
+    // Sempre que o usuário digitar valor=0 em algum campo, então os campos deverão receber destaque com contorno em vermelho, e deve ser exibido a mensagem 'Informe um valor maior que zero'.
+    // O botão Calcular deve permanecer desabilitado.
 
     // Preparação
     const sidebar = new SidebarComponent(page);
@@ -190,25 +168,20 @@ test('Validar destaque de erro e mensagem de erro para valor=0', async ({ page }
     await calculadoraPage.campoAgua.fill('0');
 
     // Verificação
-    await expect(calculadoraPage.destaqueErroAgua).toBeVisible();
-    await expect(calculadoraPage.mensagemErroAgua).toHaveText('Informe um valor maior que zero.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um valor maior que zero.');
     await expect(calculadoraPage.campoCafe).toBeEmpty();
     await expect(calculadoraPage.campoProporcao).toBeEmpty();
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
+    await calculadoraPage.validarCalcularDesabilitado();
 
     // Ação
     await calculadoraPage.campoAgua.fill('0');
     await calculadoraPage.campoCafe.fill('0');
 
     // Verificação
-    await expect(calculadoraPage.destaqueErroAgua).toBeVisible();
-    await expect(calculadoraPage.mensagemErroAgua).toHaveText('Informe um valor maior que zero.');
-    await expect(calculadoraPage.destaqueErroCafe).toBeVisible();
-    await expect(calculadoraPage.mensagemErroCafe).toHaveText('Informe um valor maior que zero.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um valor maior que zero.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoCafe', 'Informe um valor maior que zero.');
     await expect(calculadoraPage.campoProporcao).toBeEmpty();
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
+    await calculadoraPage.validarCalcularDesabilitado();
 
     // Ação
     await calculadoraPage.campoAgua.fill('0');
@@ -216,218 +189,237 @@ test('Validar destaque de erro e mensagem de erro para valor=0', async ({ page }
     await calculadoraPage.campoProporcao.fill('0');
 
     // Verificação
-    await expect(calculadoraPage.destaqueErroAgua).toBeVisible();
-    await expect(calculadoraPage.mensagemErroAgua).toHaveText('Informe um valor maior que zero.');
-    await expect(calculadoraPage.destaqueErroCafe).toBeVisible();
-    await expect(calculadoraPage.mensagemErroCafe).toHaveText('Informe um valor maior que zero.');
-    await expect(calculadoraPage.destaqueErroProporcao).toBeVisible();
-    await expect(calculadoraPage.mensagemErroProporcao).toHaveText('Informe um valor maior que zero.');
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um valor maior que zero.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoCafe', 'Informe um valor maior que zero.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoProporcao', 'Informe um valor maior que zero.');
+    await calculadoraPage.validarCalcularDesabilitado();
+});
+
+test('Validar destaque de erro e mensagem de erro para valor=0 e valor>0', async ({ page }) => {
+    // Quando o usuário preencher um campo=0 e outro campo>0, então o botão Calcular deve permanecer com esse nome e desabilitado, além de não ser exibida a mensagem de cálculo automático no terceiro campo.
+
+    // Preparação
+    const calculadoraPage = new CalculadoraPage(page);
 
     // Ação
-    await calculadoraPage.campoAgua.fill('');
-    await calculadoraPage.campoCafe.fill('');
-    await calculadoraPage.campoProporcao.fill('');
-
-    // Verificação
-    await expect(calculadoraPage.campoAgua).toBeEmpty();
-    await expect(calculadoraPage.destaqueErroAgua).not.toBeVisible();
-    await expect(calculadoraPage.mensagemErroAgua).not.toBeVisible();
-    await expect(calculadoraPage.campoCafe).toBeEmpty();
-    await expect(calculadoraPage.destaqueErroCafe).not.toBeVisible();
-    await expect(calculadoraPage.mensagemErroCafe).not.toBeVisible();
-    await expect(calculadoraPage.campoProporcao).toBeEmpty();
-    await expect(calculadoraPage.destaqueErroProporcao).not.toBeVisible();
-    await expect(calculadoraPage.mensagemErroProporcao).not.toBeVisible();
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
-});
+    await page.goto('/');
+    await calculadoraPage.campoAgua.fill('0');
+    await calculadoraPage.campoCafe.fill('1');
+    // Validação
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um valor maior que zero.');
+    await expect(calculadoraPage.mensagemProporcao).not.toBeVisible();
+    await calculadoraPage.validarCalcularDesabilitado();
+    // Ação
+    await calculadoraPage.reiniciarCalculadora();
+    await calculadoraPage.campoAgua.fill('1');
+    await calculadoraPage.campoProporcao.fill('0');
+    // Validação
+    await calculadoraPage.validaDestaqueMensagemErro('campoProporcao', 'Informe um valor maior que zero.');
+    await expect(calculadoraPage.mensagemCafe).not.toBeVisible();
+    await calculadoraPage.validarCalcularDesabilitado();
+    // Ação
+    await calculadoraPage.reiniciarCalculadora();
+    await calculadoraPage.campoCafe.fill('0');
+    await calculadoraPage.campoProporcao.fill('1');
+    // Validação
+    await calculadoraPage.validaDestaqueMensagemErro('campoCafe', 'Informe um valor maior que zero.');
+    await expect(calculadoraPage.mensagemAgua).not.toBeVisible();
+    await calculadoraPage.validarCalcularDesabilitado();
+})
 
 test('Validar destaque de erro e mensagem de erro para valor=string', async ({ page }) => {
     // Sempre que o usuário digitar valor =0, então os campos deverão receber destaque com contorno em vermelho, e deve ser exibido a mensagem 'Informe um número válido.'.
-    // O botão Calcular deve permanecer inacessível.
-    // Caso o usuário preencha um campo<0 e outro campo>0, então o botão Calcular deve permanecer com esse nome e inacessível, além de não ser exibida a mensagem de cálculo automático no terceiro campo.
+    // O botão Calcular deve permanecer desabilitado.
 
     // Preparação
-    const sidebar = new SidebarComponent(page);
     const calculadoraPage = new CalculadoraPage(page);
-
-    await page.goto('/');
-    await sidebar.irParaCalculadora();
-
     // Ação
+    await page.goto('/');
     await calculadoraPage.campoAgua.fill('-');
-
     // Validação
-    await expect(calculadoraPage.destaqueErroAgua).toBeVisible();
-    await expect(calculadoraPage.mensagemErroAgua).toHaveText('Informe um número válido.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um número válido.');
     await expect(calculadoraPage.campoCafe).toBeEmpty();
     await expect(calculadoraPage.campoProporcao).toBeEmpty();
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
-
+    await calculadoraPage.validarCalcularDesabilitado();
     // Ação
     await calculadoraPage.campoAgua.fill('-');
     await calculadoraPage.campoCafe.fill('-');
-
     // Validação
-    await expect(calculadoraPage.destaqueErroAgua).toBeVisible();
-    await expect(calculadoraPage.mensagemErroAgua).toHaveText('Informe um número válido.');
-    await expect(calculadoraPage.destaqueErroCafe).toBeVisible();
-    await expect(calculadoraPage.mensagemErroCafe).toHaveText('Informe um número válido.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um número válido.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoCafe', 'Informe um número válido.');
     await expect(calculadoraPage.campoProporcao).toBeEmpty();
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
-
+    await calculadoraPage.validarCalcularDesabilitado();
     // Ação
     await calculadoraPage.campoAgua.fill('-');
     await calculadoraPage.campoCafe.fill('-');
     await calculadoraPage.campoProporcao.fill('-');
-
     // Validação
-    await expect(calculadoraPage.destaqueErroAgua).toBeVisible();
-    await expect(calculadoraPage.mensagemErroAgua).toHaveText('Informe um número válido.');
-    await expect(calculadoraPage.destaqueErroCafe).toBeVisible();
-    await expect(calculadoraPage.mensagemErroCafe).toHaveText('Informe um número válido.');
-    await expect(calculadoraPage.destaqueErroProporcao).toBeVisible();
-    await expect(calculadoraPage.mensagemErroProporcao).toHaveText('Informe um número válido.');
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
-
-    // Ação
-    await calculadoraPage.campoAgua.fill('');
-    await calculadoraPage.campoCafe.fill('');
-    await calculadoraPage.campoProporcao.fill('');
-
-    // Validação
-    await expect(calculadoraPage.campoAgua).toBeEmpty();
-    await expect(calculadoraPage.destaqueErroAgua).not.toBeVisible();
-    await expect(calculadoraPage.mensagemErroAgua).not.toBeVisible();
-    await expect(calculadoraPage.campoCafe).toBeEmpty();
-    await expect(calculadoraPage.destaqueErroCafe).not.toBeVisible();
-    await expect(calculadoraPage.mensagemErroCafe).not.toBeVisible();
-    await expect(calculadoraPage.campoProporcao).toBeEmpty();
-    await expect(calculadoraPage.destaqueErroProporcao).not.toBeVisible();
-    await expect(calculadoraPage.mensagemErroProporcao).not.toBeVisible();
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um número válido.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoCafe', 'Informe um número válido.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoProporcao', 'Informe um número válido.');
+    await calculadoraPage.validarCalcularDesabilitado();
 });
+
+test('Validar destaque de erro e mensagem de erro para valor=string e valor>0', async ({ page }) => {
+    // Caso o usuário preencha um campo<0 e outro campo>0, então o botão Calcular deve permanecer com esse nome e desabilitado, além de não ser exibida a mensagem de cálculo automático no terceiro campo.
+
+    // Preparação
+    const calculadoraPage = new CalculadoraPage(page);
+    // Ação
+    await page.goto('/');
+    await calculadoraPage.campoAgua.fill('-');
+    await calculadoraPage.campoCafe.fill('1');
+    // Validação
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um número válido.');
+    await expect(calculadoraPage.mensagemProporcao).not.toBeVisible();
+    await calculadoraPage.validarCalcularDesabilitado();
+    // Ação
+    await calculadoraPage.reiniciarCalculadora();
+    await calculadoraPage.campoAgua.fill('1');
+    await calculadoraPage.campoProporcao.fill('-');
+    // Validação
+    await calculadoraPage.validaDestaqueMensagemErro('campoProporcao', 'Informe um número válido.');
+    await expect(calculadoraPage.mensagemCafe).not.toBeVisible();
+    await calculadoraPage.validarCalcularDesabilitado();
+    // Ação
+    await calculadoraPage.reiniciarCalculadora();
+    await calculadoraPage.campoCafe.fill('-');
+    await calculadoraPage.campoProporcao.fill('1');
+    // Validação
+    await calculadoraPage.validaDestaqueMensagemErro('campoCafe', 'Informe um número válido.');
+    await expect(calculadoraPage.mensagemAgua).not.toBeVisible();
+    await calculadoraPage.validarCalcularDesabilitado();
+})
+
+test('Validar mensagem de erro correta para valor=0 e valor!=número', async ({ page }) => {
+    // Caso o usuário preencha um valor=0 então deve ser exibida a mensagem 'Informe um valor maior que zero.', se preencher um valor!=número deve ser exibida a mensagem 'Informe um número válido.'
+
+    // Preparação
+    const calculadoraPage = new CalculadoraPage(page);
+    // Ação
+    await page.goto('/');
+    await calculadoraPage.campoAgua.fill('0');
+    await calculadoraPage.campoCafe.fill('a');
+    // Validação
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um valor maior que zero.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoCafe', 'Informe um número válido.');
+    await expect(calculadoraPage.mensagemProporcao).not.toBeVisible();
+    await calculadoraPage.validarCalcularDesabilitado();
+    // Ação
+    await calculadoraPage.reiniciarCalculadora();
+    await calculadoraPage.campoAgua.fill('a');
+    await calculadoraPage.campoProporcao.fill('0');
+    // Validação
+    await calculadoraPage.validaDestaqueMensagemErro('campoProporcao', 'Informe um valor maior que zero.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um número válido.');
+    await expect(calculadoraPage.mensagemCafe).not.toBeVisible();
+    await calculadoraPage.validarCalcularDesabilitado();
+    // Ação
+    await calculadoraPage.reiniciarCalculadora();
+    await calculadoraPage.campoProporcao.fill('a');
+    await calculadoraPage.campoCafe.fill('0');
+    // Validação
+    await calculadoraPage.validaDestaqueMensagemErro('campoCafe', 'Informe um valor maior que zero.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoProporcao', 'Informe um número válido.');
+    await expect(calculadoraPage.mensagemAgua).not.toBeVisible();
+    await calculadoraPage.validarCalcularDesabilitado();
+    // Ação
+    await calculadoraPage.reiniciarCalculadora();
+    await calculadoraPage.campoAgua.fill('0');
+    await calculadoraPage.campoCafe.fill('a');
+    await calculadoraPage.campoProporcao.fill('-');
+    // Validação
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um valor maior que zero.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoCafe', 'Informe um número válido.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoProporcao', 'Informe um número válido.');
+    await calculadoraPage.validarCalcularDesabilitado();
+})
 
 test('Validar mensagem de erro e depois realização do cálculo após correção do valor', async ({ page }) => {
     // Após o usuário digitar 2 valores, sendo um deles inválido, corrigir informando um valor válido, então o cálculo deve ser realizado normalmente.
     // Também realizar o teste com os 2 valores inválidos, e os 3 valores inválidos
 
     // Preparação
-    const sidebar = new SidebarComponent(page);
     const calculadoraPage = new CalculadoraPage(page);
-
     await page.goto('/');
-    await sidebar.irParaCalculadora();
-
     // Ação com um campo inválido
     await calculadoraPage.campoAgua.fill('500');
     await calculadoraPage.campoCafe.fill('-');
-
     // Validação
     await expect(calculadoraPage.campoAgua).toHaveValue('500');
-    await expect(calculadoraPage.destaqueErroCafe).toBeVisible();
-    await expect(calculadoraPage.mensagemErroCafe).toHaveText('Informe um número válido.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoCafe', 'Informe um número válido.');
     await expect(calculadoraPage.campoProporcao).toBeEmpty();
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
-
+    await calculadoraPage.validarCalcularDesabilitado();
     // Ação
     await calculadoraPage.campoAgua.fill('500');
     await calculadoraPage.campoCafe.fill('50');
-
     // Validação
     await expect(calculadoraPage.campoAgua).toHaveValue('500');
     await expect(calculadoraPage.campoCafe).toHaveValue('50');
-    await expect(calculadoraPage.campoProporcao).toBeEmpty();
+    await calculadoraPage.validarSemDestaqueMsgErro('campoCafe');
     await expect(calculadoraPage.mensagemProporcao).toHaveText('Este valor será calculado automaticamente.');
     await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular Proporção');
-
     // Ação
-    await calculadoraPage.botaoCalcular.click();
-
+    await calculadoraPage.clicarCalcular();
     // Validação
     await expect(calculadoraPage.campoAgua).toHaveValue('500');
     await expect(calculadoraPage.campoCafe).toHaveValue('50');
     await expect(calculadoraPage.campoProporcao).toHaveValue('10.0');
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
-
+    await calculadoraPage.validarCalcularDesabilitado();
     // Ação com dois campos inválidos
-    await calculadoraPage.botaoReiniciar.click();
+    await calculadoraPage.reiniciarCalculadora();
     await calculadoraPage.campoAgua.fill('-500');
-    await calculadoraPage.campoCafe.fill('-');
-
+    await calculadoraPage.campoCafe.fill('a');
     // Validação
-    await expect(calculadoraPage.destaqueErroAgua).toBeVisible();
-    await expect(calculadoraPage.mensagemErroAgua).toHaveText('Informe um valor maior que zero.');
-    await expect(calculadoraPage.destaqueErroCafe).toBeVisible();
-    await expect(calculadoraPage.mensagemErroCafe).toHaveText('Informe um número válido.');
-    await expect(calculadoraPage.campoProporcao).toBeEmpty();
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
-
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um valor maior que zero.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoCafe', 'Informe um número válido.');
+    await expect(calculadoraPage.mensagemProporcao).not.toBeVisible();
+    await calculadoraPage.validarCalcularDesabilitado();
     // Ação
     await calculadoraPage.campoAgua.fill('500');
-    await calculadoraPage.campoCafe.fill('50');
-
+    await calculadoraPage.campoCafe.fill('');
+    await calculadoraPage.campoProporcao.fill('15');
     // Validação
     await expect(calculadoraPage.campoAgua).toHaveValue('500');
-    await expect(calculadoraPage.campoCafe).toHaveValue('50');
-    await expect(calculadoraPage.campoProporcao).toBeEmpty();
-    await expect(calculadoraPage.mensagemProporcao).toHaveText('Este valor será calculado automaticamente.');
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular Proporção');
-
+    await calculadoraPage.validarSemDestaqueMsgErro('campoAgua');
+    await expect(calculadoraPage.campoProporcao).toHaveValue('15');
+    await calculadoraPage.validarSemDestaqueMsgErro('campoCafe');
+    await expect(calculadoraPage.mensagemCafe).toHaveText('Este valor será calculado automaticamente.');
+    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular Café (g)');
     // Ação
-    await calculadoraPage.botaoCalcular.click();
-
+    await calculadoraPage.clicarCalcular();
     // Validação
     await expect(calculadoraPage.campoAgua).toHaveValue('500');
-    await expect(calculadoraPage.campoCafe).toHaveValue('50');
-    await expect(calculadoraPage.campoProporcao).toHaveValue('10.0');
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
-
+    await expect(calculadoraPage.campoCafe).toHaveValue('33.3');
+    await expect(calculadoraPage.campoProporcao).toHaveValue('15');
+    await calculadoraPage.validarCalcularDesabilitado();
     // Ação com três campos inválidos
-    await calculadoraPage.botaoReiniciar.click();
-    await calculadoraPage.campoAgua.fill('-500');
+    await calculadoraPage.reiniciarCalculadora();
+    await calculadoraPage.campoAgua.fill('a');
     await calculadoraPage.campoCafe.fill('-');
     await calculadoraPage.campoProporcao.fill('0');
-
     // Validação
-    await expect(calculadoraPage.destaqueErroAgua).toBeVisible();
-    await expect(calculadoraPage.mensagemErroAgua).toHaveText('Informe um valor maior que zero.');
-    await expect(calculadoraPage.destaqueErroCafe).toBeVisible();
-    await expect(calculadoraPage.mensagemErroCafe).toHaveText('Informe um número válido.');
-    await expect(calculadoraPage.destaqueErroProporcao).toBeVisible();
-    await expect(calculadoraPage.mensagemErroAgua).toHaveText('Informe um valor maior que zero.');
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
-
+    await calculadoraPage.validaDestaqueMensagemErro('campoAgua', 'Informe um número válido.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoCafe', 'Informe um número válido.');
+    await calculadoraPage.validaDestaqueMensagemErro('campoProporcao', 'Informe um valor maior que zero.');
+    await calculadoraPage.validarCalcularDesabilitado();
     // Ação
     await calculadoraPage.campoAgua.fill('');
     await calculadoraPage.campoCafe.fill('50');
     await calculadoraPage.campoProporcao.fill('15');
-
     // Validação
-    await expect(calculadoraPage.campoAgua).toBeEmpty();
     await expect(calculadoraPage.mensagemAgua).toHaveText('Este valor será calculado automaticamente.');
+    await calculadoraPage.validarSemDestaqueMsgErro('campoAgua');
     await expect(calculadoraPage.campoCafe).toHaveValue('50');
+    await calculadoraPage.validarSemDestaqueMsgErro('campoCafe');
     await expect(calculadoraPage.campoProporcao).toHaveValue('15');
+    await calculadoraPage.validarSemDestaqueMsgErro('campoProporcao');
     await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular Água (ml)');
-
     // Ação
-    await calculadoraPage.botaoCalcular.click();
-
+    await calculadoraPage.clicarCalcular();
     // Validação
     await expect(calculadoraPage.campoAgua).toHaveValue('750');
     await expect(calculadoraPage.campoCafe).toHaveValue('50');
     await expect(calculadoraPage.campoProporcao).toHaveValue('15');
-    await expect(calculadoraPage.botaoCalcular).toHaveText('Calcular');
-    await expect(calculadoraPage.botaoCalcular).toBeDisabled();
+    await calculadoraPage.validarCalcularDesabilitado();
 });

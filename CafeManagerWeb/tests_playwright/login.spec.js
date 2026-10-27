@@ -6,8 +6,6 @@ import { LoginPage } from './pages/login.page';
 import { PerfilComponent } from './components/perfil.component';
 import { PerfilPage } from './pages/perfil.page';
 import { PreparaAmbiente } from './api/preparacao.api';
-import { ApiLogin } from './api/login.api'
-import { ApiDelete } from './api/delete.api';
 
 
 

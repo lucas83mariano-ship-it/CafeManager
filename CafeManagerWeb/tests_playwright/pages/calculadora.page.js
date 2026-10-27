@@ -5,15 +5,39 @@ export class CalculadoraPage {
 
     constructor(page) {
         this.page = page
+        this.gruposCampos = [
+            {
+                cenário: 'campoAgua',
+                grupo: this.grupoAgua,
+                mensagem: this.mensagemAgua,
+                erro: this.mensagemErroAgua,
+                destaque: this.destaqueErroAgua
+            },
+            {
+                cenário: 'campoCafe',
+                grupo: this.grupoCafe,
+                mensagem: this.mensagemCafe,
+                erro: this.mensagemErroCafe,
+                destaque: this.destaqueErroCafe
+            },
+            {
+                cenário: 'campoProporcao',
+                grupo: this.grupoProporcao,
+                mensagem: this.mensagemProporcao,
+                erro: this.mensagemErroProporcao,
+                destaque: this.destaqueErroProporcao
+            }
+
+        ]
     }
 
-    
+
     // Título da página
     get titulo() {
         return this.page.getByRole('heading', { name: 'Calcule sua Receita' });
     }
 
-    
+
     // Grupos
     get grupoAgua() {
         return this.page.locator('.input-group').filter({ has: this.page.getByLabel('Água (ml)') });
@@ -27,7 +51,7 @@ export class CalculadoraPage {
         return this.page.locator('.input-group').filter({ has: this.page.getByLabel('Proporção') });
     }
 
-    
+
     // Campos da página
     get campoAgua() {
         return this.grupoAgua.getByLabel('Água (ml)');
@@ -41,12 +65,6 @@ export class CalculadoraPage {
         return this.grupoProporcao.getByLabel('Proporção');
     }
 
-    async retornaCampo(meuCampo) {
-        const resultadoCampo = this.camposCalculadora.filter(meusCampos => meusCampos.campo === meuCampo)
-        return resultadoCampo
-    }
-
-    
     // Botões
     get botaoCalcular() {
         return this.page.getByRole('button', { name: /Calcular/ });
@@ -84,6 +102,7 @@ export class CalculadoraPage {
         return this.grupoProporcao.locator('.calc-input.input-destaque');
     }
 
+
     // Erros (Destaques e Mensagens)
     get destaqueErroAgua() {
         return this.grupoAgua.locator('.calc-input.input-erro');
@@ -109,8 +128,9 @@ export class CalculadoraPage {
         return this.grupoProporcao.locator('.input-error');
     }
 
+
     // Validações
-    async calculadoraEstadoInicial() {
+    async validarCalcEstadoInicial() {
         await expect(this.titulo).toBeVisible();
         await expect(this.campoAgua).toBeEmpty();
         await expect(this.campoCafe).toBeEmpty();
@@ -119,12 +139,35 @@ export class CalculadoraPage {
         await expect(this.botaoCalcular).toBeDisabled();
     }
 
+    async validarCalcularDesabilitado() {
+        await expect(this.botaoCalcular).toHaveText('Calcular')
+        await expect(this.botaoCalcular).toBeDisabled()
+    }
+
+    async validaDestaqueMensagemErro(meuCenario, minhaMensagem) {
+        const meuGrupo = this.gruposCampos.find(procura => procura.cenário === meuCenario)
+        await expect(meuGrupo.grupo).toContainText(minhaMensagem)
+        await expect(meuGrupo.destaque).toHaveCSS('border', '2px solid rgb(179, 38, 30)')
+    }
+
+    async validarResultadoCalculo(meuCampo, meuValor) {
+        const resultado = await this[meuCampo].inputValue();
+        expect(Number(resultado)).toBe(meuValor);
+    }
+
+    async validarSemDestaqueMsgErro(meuCampo) {
+        const meuGrupo = this.gruposCampos.find(resultado => resultado.cenário === meuCampo)
+        await expect(meuGrupo.erro).not.toBeVisible()
+        await expect(meuGrupo.destaque).not.toBeVisible()
+    }
+
+
     // Ações
-    async resetarCalculadora() {
+    async reiniciarCalculadora() {
         await this.botaoReiniciar.click();
     }
 
-    async realizarCalculo() {
+    async clicarCalcular() {
         await this.botaoCalcular.click();
     }
 
@@ -132,6 +175,13 @@ export class CalculadoraPage {
         await this.campoAgua.fill('');
         await this.campoCafe.fill('');
         await this.campoProporcao.fill('');
+    }
+
+    async preencherValoresParaCalculo(campo1, campo2) {
+        const meuCampo1 = cenariosCalculo.find(resultado => resultado.campos === campo1)
+        const meuCampo2 = cenariosCalculo.find(resultado => resultado.campos === campo2)
+        await this[meuCampo1.campos].fill(meuCampo1.valor)
+        await this[meuCampo2.campos].fill(meuCampo2.valor)
     }
 }
 
